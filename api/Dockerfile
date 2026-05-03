@@ -30,7 +30,7 @@ RUN useradd -m -u 1000 appuser
 WORKDIR /app
 
 # Instala Poetry
-RUN pip install --no-cache-dir poetry==2.1.3
+RUN pip install --no-cache-dir poetry==2.3.4
 
 # Copia apenas os arquivos de dependências primeiro (cache de camada)
 COPY pyproject.toml poetry.lock* ./
