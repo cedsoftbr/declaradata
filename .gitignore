@@ -1,0 +1,16 @@
+# Secrets e variáveis de ambiente
+.env
+.env.local
+.envrc
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Logs
+*.log

@@ -1,0 +1,13 @@
+Código de verificação — Declaradata
+
+Olá, {{ user.first_name|default:user.email }}!
+
+Use o código abaixo para concluir seu login no Declaradata:
+
+  {{ pin }}
+
+Válido por 10 minutos. Não compartilhe este código com ninguém.
+
+Se você não tentou fazer login, ignore este e-mail e sua conta permanecerá segura.
+
+— Equipe Declaradata

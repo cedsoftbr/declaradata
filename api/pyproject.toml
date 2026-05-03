@@ -1,0 +1,118 @@
+[tool.poetry]
+package-mode = false
+
+[project]
+name = "declaradata-api"
+version = "1.0.0"
+description = "API REST do Declaradata, plataforma SaaS para emissão e gestão de DC-e (Documento de Conhecimento eletrônico)"
+authors = [
+    {name = "CEDSoft informatica",email = "admin@cedsoft.com.br"}
+]
+readme = "README.md"
+requires-python = ">=3.14,<4.0"
+dependencies = [
+    "djangorestframework (>=3.17.1,<4.0.0)",
+    "django-filter (>=25.2,<26.0)",
+    "djangorestframework-simplejwt (>=5.5.1,<6.0.0)",
+    "django-cors-headers (>=4.9.0,<5.0.0)",
+    "python-decouple (>=3.8,<4.0)",
+    "drf-spectacular (>=0.29.0,<0.30.0)",
+    "dj-rest-auth (>=7.2.0,<8.0.0)",
+    "psycopg2-binary (>=2.9.11,<3.0.0)",
+    "whitenoise (>=6.12.0,<7.0.0)",
+    "cryptography (>=44.0.0,<45.0.0)",
+    "weasyprint (>=68.1,<69.0)",
+    "lxml (>=6.0.4,<7.0.0)",
+    "python-barcode (>=0.16.1,<0.17.0)",
+    "qrcode[pil] (>=8.2,<9.0)",
+    "openpyxl (>=3.1.5,<4.0.0)",
+    "boto3 (>=1.42.89,<2.0.0)",
+    "pypdf (>=6.10.0,<7.0.0)",
+    "celery (>=5.6.3,<6.0.0)",
+    "redis (>=7.4.0,<8.0.0)",
+    "dj-database-url (>=3.1.2,<4.0.0)",
+    "validate-docbr (>=2.0.0,<3.0.0)",
+    "sentry-sdk (>=2.58.0,<3.0.0)",
+    "django-fsm-2 (>=4.2.4,<5.0.0)",
+    "requests (>=2.32.0,<3.0.0)",
+    "signxml (>=4.4.0,<5.0.0)",
+    "gunicorn (>=23.0.0,<24.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.3,<10.0.0)",
+    "pytest-cov (>=7.1.0,<8.0.0)",
+    "taskipy (>=1.14.1,<2.0.0)",
+    "ruff (>=0.15.9,<0.16.0)",
+    "pytest-django (>=4.12.0,<5.0.0)",
+    "pytest-env (>=1.6.0,<2.0.0)",
+    "factory-boy (>=3.3.3,<4.0.0)"
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-exclude = ['migrations', 'migrations_backup']
+fix = true
+
+[tool.ruff.lint]
+preview = true
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # imports order
+    "UP",  # pyupgrade (python moderno)
+    "B",   # bugbear (bugs comuns)
+    "SIM", # simplificações
+    "C4",  # comprehensions melhores
+    "PIE", # boas práticas
+    "PL",  # pylint subset
+    "PT",  # pytest
+    "RET", # return consistency
+    "ARG", # argumentos não usados
+    "RUF", # regras ruff
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-single-line = false
+order-by-type = true
+
+[tool.ruff.lint.pylint]
+max-args = 5
+max-branches = 12
+max-returns = 6
+max-statements = 60
+
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = ["PLR2004", "PLR6301", "ARG001", "ARG002"]
+"**/tests.py" = ["PLR2004", "PLR6301", "ARG001", "ARG002"]
+"**/conftest.py" = ["ARG001"]
+
+[tool.ruff.format]
+preview = true
+quote-style = "single"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.taskipy.tasks]
+format = 'ruff format'
+lint = 'ruff check'
+run = 'poetry run python manage.py runserver'
+worker = 'poetry run celery -A config worker --loglevel=info'
+dev = 'task run & task worker'
+migrate = 'poetry run python manage.py migrate'
+superuser = 'python manage.py createsuperuser'
+license = 'poetry run pip-licenses'
+test = 'pytest -s -x -vv'
+ci = 'pytest'
+version-hotfix = 'poetry version patch'
+version-feature = 'poetry version minor'
+requirements = 'poetry export -f requirements.txt --output requirements.txt --without-hashes'

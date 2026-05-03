@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wait)",
+      "Bash(unset VIRTUAL_ENV)",
+      "Bash(git -C /home/cesar/Projetos/CEDSoft/declaradata status)",
+      "Bash(.venv/bin/pytest apps/shipments/tests/test_views.py::PlanViewSetTests::test_create_plan --tb=long)",
+      "Bash(SECRET_KEY=test-secret-key DEBUG=false DATABASE_URL=\"sqlite:///test.db\" R2_ACCESS_KEY_ID=test-key R2_SECRET_ACCESS_KEY=test-secret R2_PUBLIC_BUCKET_NAME=test-bucket R2_ACCOUNT_ID=test-account R2_PUBLIC_URL=https://pub-test.r2.dev CORS_ALLOWED_ORIGINS=\"\" DISABLE_THROTTLING=true poetry run pytest apps/shipments/tests/test_views.py::PlanViewSetTests -x --tb=long)",
+      "Bash(SECRET_KEY=test-secret-key DEBUG=false DATABASE_URL=\"sqlite:///test.db\" R2_ACCESS_KEY_ID=test-key R2_SECRET_ACCESS_KEY=test-secret R2_PUBLIC_BUCKET_NAME=test-bucket R2_ACCOUNT_ID=test-account R2_PUBLIC_URL=https://pub-test.r2.dev CORS_ALLOWED_ORIGINS=\"\" DISABLE_THROTTLING=true poetry run pytest apps/shipments/tests/test_views.py::PlanViewSetTests -x --tb=long -p no:reuse-db)",
+      "Bash(poetry install *)",
+      "Bash(SECRET_KEY=test-secret-key DEBUG=false DATABASE_URL=\"sqlite:///test.db\" R2_ACCESS_KEY_ID=test-key R2_SECRET_ACCESS_KEY=test-secret R2_PUBLIC_BUCKET_NAME=test-bucket R2_ACCOUNT_ID=test-account R2_PUBLIC_URL=https://pub-test.r2.dev CORS_ALLOWED_ORIGINS=\"\" poetry run pytest apps/shipments/tests/test_views.py::PlanViewSetTests -x --tb=short -p no:reuse-db)",
+      "Bash(SECRET_KEY=test-secret-key DEBUG=false DATABASE_URL=\"sqlite:///test.db\" R2_ACCESS_KEY_ID=test-key R2_SECRET_ACCESS_KEY=test-secret R2_PUBLIC_BUCKET_NAME=test-bucket R2_ACCOUNT_ID=test-account R2_PUBLIC_URL=https://pub-test.r2.dev CORS_ALLOWED_ORIGINS=\"\" poetry run pytest apps/billing/tests/test_api.py::PlanViewSetTests -x --tb=long -p no:reuse-db)",
+      "Bash(SECRET_KEY=test-secret-key DEBUG=false DATABASE_URL=\"sqlite:///test.db\" R2_ACCESS_KEY_ID=test-key R2_SECRET_ACCESS_KEY=test-secret R2_PUBLIC_BUCKET_NAME=test-bucket R2_ACCOUNT_ID=test-account R2_PUBLIC_URL=https://pub-test.r2.dev CORS_ALLOWED_ORIGINS=\"\" poetry run python manage.py showmigrations billing)",
+      "Bash(gh run *)",
+      "Bash(curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg)",
+      "Bash(sudo dd *)",
+      "Bash(sudo chmod *)",
+      "Bash(dpkg --print-architecture)",
+      "Bash(sudo tee *)",
+      "Bash(sudo apt *)",
+      "Bash(gh auth *)",
+      "Bash(psql postgres://cesar:1306@localhost:5432/declaradata_test -c \"SELECT 1\")"
+    ]
+  }
+}

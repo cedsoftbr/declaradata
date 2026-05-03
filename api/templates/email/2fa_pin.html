@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Código de verificação — Declaradata</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f4f5; font-family:Arial, Helvetica, sans-serif;">
+
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+         style="background-color:#f4f4f5; padding:20px 0;">
+    <tr>
+      <td align="center">
+
+        <!-- Card -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0"
+               style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" bgcolor="#18181b" style="padding:28px 24px;">
+              <span style="font-size:28px; font-weight:bold; letter-spacing:2px;
+                           font-family:Arial, Helvetica, sans-serif; color:#ffffff;">
+                DECLARADATA
+              </span>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding:36px 32px; color:#333333;">
+
+              <p style="font-size:18px; font-weight:bold; color:#18181b; margin:0 0 16px 0;">
+                Olá, {{ user.first_name|default:user.email }}!
+              </p>
+
+              <p style="font-size:15px; color:#4b5563; margin:0 0 28px 0;">
+                Use o código abaixo para concluir seu login no <strong>Declaradata</strong>.
+              </p>
+
+              <!-- PIN digits -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0"
+                     style="margin:0 auto 28px auto;">
+                <tr>
+                  {% for digit in pin_digits %}
+                  <td style="padding:0 4px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="width:52px; height:60px; border:2px solid #e2e8f0;
+                                   border-radius:8px; text-align:center; vertical-align:middle;
+                                   font-size:30px; font-weight:700; font-family:monospace;
+                                   color:#0f172a; background-color:#f8fafc;">
+                          {{ digit }}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  {% endfor %}
+                </tr>
+              </table>
+
+              <!-- Security note -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+                     style="margin:0 0 24px 0;">
+                <tr>
+                  <td bgcolor="#f9fafb"
+                      style="border-left:4px solid #6b7280; padding:14px 16px; border-radius:4px;">
+                    <p style="font-size:13px; color:#4b5563; margin:0;">
+                      <strong>Válido por 10 minutos.</strong>
+                      Não compartilhe este código com ninguém.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="font-size:14px; color:#6b7280; margin:0;">
+                Se você não tentou fazer login, ignore este e-mail e sua conta permanecerá segura.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td bgcolor="#f4f4f5" align="center"
+                style="padding:20px; font-size:13px; color:#6b7280;
+                       border-top:1px solid #e5e7eb;">
+              <p style="margin:0; font-weight:bold; color:#374151;">CEDSoft informatica</p>
+              <p style="margin:4px 0 0 0;">© 2026 — Todos os direitos reservados</p>
+            </td>
+          </tr>
+
+        </table>
+
+        <!-- Spacer -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tr><td height="16" style="line-height:16px;">&nbsp;</td></tr>
+        </table>
+
+        <!-- Legal notice -->
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td style="padding:0 16px; font-size:11px; color:#9ca3af;
+                       text-align:justify; line-height:1.5;">
+              <p style="margin:0; font-weight:bold; text-transform:uppercase; color:#6b7280;">
+                Aviso Legal
+              </p>
+              <p style="margin:6px 0 0 0;">
+                Esta mensagem é destinada exclusivamente para a(s) pessoa(s) a quem é dirigida,
+                podendo conter informação confidencial e/ou legalmente privilegiada.
+                Se você não for destinatário desta mensagem, fica notificado de abster-se de
+                divulgar, copiar, distribuir ou utilizar a informação aqui contida.
+                Caso tenha recebido este e-mail por engano, solicite sua eliminação imediata.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
