@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DACE - Documento Auxiliar da Declaração de Conteúdo Eletrônica</title>
+    <style>
+        @page {
+            margin: 8mm;
+            size: A4;
+        }
+        @page {
+            @top-center {
+                content: element(additional-header);
+            }
+        }
+        @page :first {
+            @top-center {
+                content: normal;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.2;
+            color: #000;
+        }
+        .container {
+            width: 100%;
+        }
+        .additional-page-header {
+            position: running(additional-header);
+            border: 1px solid #000;
+            padding: 2px 5px;
+            font-size: 7pt;
+        }
+        .additional-page-header table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .additional-page-header td {
+            vertical-align: middle;
+            padding: 2px 4px;
+            border: none;
+        }
+        .additional-page-header .mini-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 8pt;
+        }
+        .additional-page-header .mini-key {
+            font-family: monospace;
+            font-size: 7pt;
+            word-break: break-all;
+        }
+
+        /* ── Cabeçalho principal ── */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .header-table > tbody > tr > td {
+            border: 1px solid #000;
+            padding: 0;
+            vertical-align: top;
+        }
+        .title {
+            font-weight: bold;
+            font-size: 24pt;
+            text-align: center;
+            display: block;
+        }
+        .subtitle-main {
+            font-weight: bold;
+            font-size: 9pt;
+            text-align: center;
+            display: block;
+            text-transform: uppercase;
+        }
+        .subtitle-small {
+            font-size: 9pt;
+            text-align: center;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* ── Coluna fiscal (direita do cabeçalho) ── */
+        .fiscal-nested {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .fiscal-nested td {
+            border: none;
+            border-bottom: 1px solid #000;
+            padding: 4px 6px;
+            vertical-align: top;
+        }
+        .fiscal-nested tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ── Código de barras: ocupa toda a célula sem estourar ── */
+        .barcode-img {
+            display: block;
+            width: 100%;
+            height: 55px;
+        }
+
+        .access-key-formatted {
+            font-size: 9pt;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-top: 2px;
+            text-align: center;
+        }
+
+        /* ── Labels e valores genéricos ── */
+        .label {
+            font-size: 7pt;
+            font-weight: bold;
+            display: block;
+            text-transform: uppercase;
+            color: #333;
+        }
+        .value {
+            font-size: 9pt;
+            display: block;
+        }
+        .center  { text-align: center; }
+        .right   { text-align: right; }
+        .bold    { font-weight: bold; }
+
+        /* ── Tabela de partes (remetente / destinatário) — estilo NF-e ── */
+        table.parte {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        table.parte th,
+        table.parte td {
+            border: 1px solid #000;
+            padding: 3px 5px;
+            vertical-align: top;
+        }
+        table.parte th {
+            background-color: #f2f2f2;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: left;
+        }
+        table.parte td .label {
+            font-size: 6.5pt;
+        }
+        table.parte td .value {
+            font-size: 8.5pt;
+        }
+
+        /* ── Tabela de itens ── */
+        table.items {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        table.items th,
+        table.items td {
+            border: 1px solid #000;
+            padding: 3px;
+            font-size: 8pt;
+        }
+        table.items th {
+            background-color: #f2f2f2;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        /* ── Transportador ── */
+        table.transportador {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        table.transportador th,
+        table.transportador td {
+            border: 1px solid #000;
+            padding: 3px 5px;
+            vertical-align: top;
+        }
+        table.transportador th {
+            background-color: #f2f2f2;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: left;
+        }
+        table.transportador td .label { font-size: 6.5pt; }
+        table.transportador td .value { font-size: 8.5pt; }
+
+        .no-padding { padding: 0 !important; }
+
+        .qr-placeholder {
+            width: 90px;
+            height: 90px;
+            border: 1px solid #ccc;
+            font-size: 6pt;
+            text-align: center;
+            margin: 0 auto;
+            padding-top: 30px;
+        }
+
+        .w-30  { width: 30%; }
+        .w-70  { width: 70%; }
+        .w-50  { width: 50%; }
+        .w-40  { width: 40%; }
+        .w-60  { width: 60%; }
+        .w-35  { width: 35%; }
+        .w-25  { width: 25%; }
+        .w-15  { width: 15%; }
+        .w-10  { width: 10%; }
+        .w-7   { width: 7%;  }
+
+        /* ── Watermark homologação / cancelado ── */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 72pt;
+            font-weight: bold;
+            color: rgba(255, 0, 0, 0.12);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 9999;
+            letter-spacing: 4px;
+        }
+        .watermark.cancelado {
+            color: rgba(180, 0, 0, 0.30);
+        }
+        .page-number::after {
+            content: counter(page) " / " counter(pages);
+        }
+    </style>
+</head>
+<body>
+{% if watermark_text %}
+<div class="watermark{% if watermark_text == 'CANCELADO' %} cancelado{% endif %}">{{ watermark_text }}</div>
+{% endif %}
+<div class="additional-page-header">
+    <table>
+        <tr>
+            <td style="width:34%;">
+                <div class="mini-title">DACE - Declaração Auxiliar de Conteúdo Eletrônica</div>
+                <div>Emitente: {{ emitente_snapshot.name|default:"NÃO INFORMADO" }}</div>
+                <div>Doc: {{ emitente_snapshot.document|default:"NÃO INFORMADO" }}</div>
+            </td>
+            <td style="width:46%; text-align:center;">
+                {% if barcode_base64 %}
+                <img src="data:image/png;base64,{{ barcode_base64 }}" style="width:100%; height:24px;" alt="Código de Barras">
+                {% endif %}
+                <div class="mini-key">{{ access_key_formatted }}</div>
+            </td>
+            <td style="width:20%; text-align:right;">
+                <div>Nº {{ shipment.number|stringformat:"03d"|default:"001" }}</div>
+                <div>SÉRIE {{ shipment.serie|stringformat:"03d"|default:"001" }}</div>
+                <div>Folha <span class="page-number"></span></div>
+            </td>
+        </tr>
+    </table>
+</div>
+<div class="container">
+
+    <!-- ══ CABEÇALHO DACE ══ -->
+    <table class="header-table">
+        <tbody>
+        <tr>
+            <!-- COLUNA ESQUERDA: identificação -->
+            <td class="w-30 center" style="vertical-align: middle; padding: 10px;">
+                <span class="title">DACE</span>
+                <span class="subtitle-main">Documento Auxiliar</span>
+                <span class="subtitle-small">Declaração de Conteúdo Eletrônica</span>
+                <div style="margin-top: 15px; font-size: 12pt;">
+                    <span class="bold">Nº: {{ shipment.number|stringformat:"03d"|default:"001" }}</span><br>
+                    <span class="bold">SÉRIE: {{ shipment.serie|stringformat:"03d"|default:"001" }}</span>
+                    <div style="margin-top: 5px; font-size: 8pt;" class="bold">
+                        Folha: <span class="page-number"></span>
+                    </div>
+                </div>
+            </td>
+
+            <!-- COLUNA DIREITA: fiscal -->
+            <td class="w-70 no-padding">
+                <table class="fiscal-nested">
+                    <!-- Código de barras — 100% da célula, sem overflow -->
+                    <tr>
+                        <td style="padding: 6px 6px 2px 6px;">
+                            {% if barcode_base64 %}
+                            <img src="data:image/png;base64,{{ barcode_base64 }}"
+                                 class="barcode-img" alt="Código de Barras">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <!-- Chave de acesso -->
+                    <tr>
+                        <td>
+                            <span class="label">Chave de Acesso para Consulta de Autenticidade</span>
+                            <div class="access-key-formatted">{{ access_key_formatted }}</div>
+                        </td>
+                    </tr>
+                    <!-- Protocolo -->
+                    <tr>
+                        <td>
+                            <span class="label">Protocolo de Autorização de Uso</span>
+                            <span class="value center bold" style="font-size: 11pt;">
+                                {{ protocol_number_display }}
+                            </span>
+                            <span class="value center" style="font-size: 8.5pt; margin-top: 2px;">
+                                Protocolado em: {{ protocol_datetime_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <!-- Data e Natureza -->
+                    <tr>
+                        <td class="no-padding">
+                            <table style="width:100%; border-collapse:collapse;">
+                                <tr>
+                                    <td style="width:50%; padding:4px 6px; border:none; border-right:1px solid #000;">
+                                        <span class="label">Data de Emissão</span>
+                                        <span class="value">{{ shipment.dh_emi|date:"d/m/Y H:i:s" }}</span>
+                                    </td>
+                                    <td style="width:50%; padding:4px 6px; border:none;">
+                                        <span class="label">Modalidade do Transporte</span>
+                                        <span class="value">{{ transport_mode_display }}</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- ══ REMETENTE ══ -->
+    <table class="parte">
+        <colgroup>
+            <!-- Grade de 6 colunas para acomodar as 3 linhas -->
+            <!-- L1: Nome(3) | CNPJ(3)              -->
+            <!-- L2: Endereço(3) | Número(1) | Complemento(2)-->
+            <!-- L3: Bairro(1) | CEP(1) | Município(3) | UF(1)-->
+            <col style="width:22%"><!-- A: Bairro -->
+            <col style="width:12%"><!-- B: CEP / Número -->
+            <col style="width:16%"><!-- C: parte Município / parte Nome -->
+            <col style="width:10%"><!-- D: parte Município -->
+            <col style="width:20%"><!-- E: parte Município / CNPJ / Complemento -->
+            <col style="width:20%"><!-- F: UF / Complemento -->
+        </colgroup>
+        <thead>
+            <tr><th colspan="6">Remetente (Usuário Emitente)</th></tr>
+        </thead>
+        <tbody>
+            <!-- L1: Nome/Razão Social | CNPJ/CPF -->
+            <tr>
+                <td colspan="3">
+                    <span class="label">Nome / Razão Social</span>
+                    <span class="value bold">{{ sender_or_emit_snapshot.name|default:"NÃO INFORMADO" }}</span>
+                </td>
+                <td colspan="3">
+                    <span class="label">CNPJ / CPF</span>
+                    <span class="value">{{ sender_or_emit_snapshot.document|default:"NÃO INFORMADO" }}</span>
+                </td>
+            </tr>
+            <!-- L2: Endereço | Número | Complemento -->
+            <tr>
+                <td colspan="3">
+                    <span class="label">Endereço</span>
+                    <span class="value">{{ sender_or_emit_snapshot.address|default:"NÃO INFORMADO" }}</span>
+                </td>
+                <td>
+                    <span class="label">Número</span>
+                    <span class="value">{{ sender_or_emit_snapshot.number|default:"S/N" }}</span>
+                </td>
+                <td colspan="2">
+                    <span class="label">Complemento</span>
+                    <span class="value">{{ sender_or_emit_snapshot.complement|default:"—" }}</span>
+                </td>
+            </tr>
+            <!-- L3: Bairro | CEP | Município | UF -->
+            <tr>
+                <td>
+                    <span class="label">Bairro</span>
+                    <span class="value">{{ sender_or_emit_snapshot.neighborhood|default:"NÃO INFORMADO" }}</span>
+                </td>
+                <td>
+                    <span class="label">CEP</span>
+                    <span class="value">{{ sender_or_emit_snapshot.zip_code|default:"NÃO INFORMADO" }}</span>
+                </td>
+                <td colspan="3">
+                    <span class="label">Município</span>
+                    <span class="value">{{ sender_or_emit_snapshot.city_name|default:"NÃO INFORMADO" }}</span>
+                </td>
+                <td>
+                    <span class="label">UF</span>
+                    <span class="value">{{ sender_or_emit_snapshot.city_uf|default:"--" }}</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ══ DESTINATÁRIO ══ -->
+    <table class="parte">
+        <colgroup>
+            <col style="width:22%">
+            <col style="width:12%">
+            <col style="width:16%">
+            <col style="width:10%">
+            <col style="width:20%">
+            <col style="width:20%">
+        </colgroup>
+        <thead>
+            <tr><th colspan="6">Destinatário</th></tr>
+        </thead>
+        <tbody>
+            <!-- L1: Nome/Razão Social | CNPJ/CPF -->
+            <tr>
+                <td colspan="3">
+                    <span class="label">Nome / Razão Social</span>
+                    <span class="value bold">{{ shipment.recipient_snapshot.name }}</span>
+                </td>
+                <td colspan="3">
+                    <span class="label">CNPJ / CPF</span>
+                    <span class="value">{{ shipment.recipient_snapshot.document }}</span>
+                </td>
+            </tr>
+            <!-- L2: Endereço | Número | Complemento -->
+            <tr>
+                <td colspan="3">
+                    <span class="label">Endereço</span>
+                    <span class="value">{{ shipment.recipient_snapshot.address }}</span>
+                </td>
+                <td>
+                    <span class="label">Número</span>
+                    <span class="value">{{ shipment.recipient_snapshot.number }}</span>
+                </td>
+                <td colspan="2">
+                    <span class="label">Complemento</span>
+                    <span class="value">{{ shipment.recipient_snapshot.complement|default:"—" }}</span>
+                </td>
+            </tr>
+            <!-- L3: Bairro | CEP | Município | UF -->
+            <tr>
+                <td>
+                    <span class="label">Bairro</span>
+                    <span class="value">{{ shipment.recipient_snapshot.neighborhood }}</span>
+                </td>
+                <td>
+                    <span class="label">CEP</span>
+                    <span class="value">{{ shipment.recipient_snapshot.zip_code }}</span>
+                </td>
+                <td colspan="3">
+                    <span class="label">Município</span>
+                    <span class="value">{{ shipment.recipient_snapshot.city_name }}</span>
+                </td>
+                <td>
+                    <span class="label">UF</span>
+                    <span class="value">{{ shipment.recipient_snapshot.city_uf }}</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ══ TRANSPORTADOR ══ -->
+    <table class="transportador">
+        <thead>
+            <tr><th colspan="2">Identificação do Fisco, Marketplace ou Transportadora</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="w-60">
+                    <span class="label">{{ fiscal_label }} - Nome / Razão Social</span>
+                    <span class="value bold">{{ fiscal_snapshot.name|default:"NÃO INFORMADO" }}</span>
+                </td>
+                <td class="w-40">
+                    <span class="label">{{ fiscal_label }} - CNPJ / CPF</span>
+                    <span class="value">{{ fiscal_snapshot.document|default:"NÃO INFORMADO" }}</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ══ PRODUTOS / ITENS ══ -->
+    <table class="items">
+        <thead>
+            <tr>
+                <th style="width:7%">Item</th>
+                <th style="width:47%">Descrição do Produto</th>
+                <th style="width:12%">NCM</th>
+                <th style="width:10%">Qtd</th>
+                <th style="width:12%">V. Unit.</th>
+                <th style="width:12%">V. Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in shipment.items.all %}
+            <tr>
+                <td class="center">{{ item.n_item }}</td>
+                <td>{{ item.x_prod }}</td>
+                <td class="center">{{ item.ncm }}</td>
+                <td class="right">{{ item.q_com|floatformat:2 }}</td>
+                <td class="right">{{ item.v_un_com|floatformat:2 }}</td>
+                <td class="right">{{ item.v_prod|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="5" class="right bold">VALOR TOTAL DA DECLARAÇÃO:</td>
+                <td class="right bold">R$ {{ total_value|floatformat:2 }}</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <!-- ══ INFORMAÇÕES COMPLEMENTARES + INFORMAÇÕES DO FISCO ══ -->
+    <table style="width:100%; border-collapse:collapse; margin-top:5px;">
+        <tr>
+            <td style="width:50%; border:1px solid #000; padding:5px; vertical-align:top; min-height:54px;">
+                <span class="label">Informações Complementares</span>
+                <div style="font-size:8.5pt; min-height:65px;">{{ shipment.info_complementar|default:"" }}</div>
+            </td>
+            <td style="width:50%; border:1px solid #000; border-left:none; padding:5px; vertical-align:top; min-height:54px;">
+                <span class="label">Informações Adicionais do Fisco</span>
+                <div style="font-size:8.5pt; min-height:65px;">{{ shipment.info_fisco|default:"" }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ══ QR CODE + IMPORTANTE ══ -->
+    <table style="width:100%; border-collapse:collapse; margin-top:5px;">
+        <tr>
+            <!-- QR Code à esquerda -->
+            <td style="width:22%; border:1px solid #000; padding:5px; vertical-align:middle; text-align:center;">
+                {% if qr_base64 %}
+                <img src="data:image/png;base64,{{ qr_base64 }}"
+                     style="width:100%; display:block;" alt="QR Code">
+                {% endif %}
+            </td>
+            <!-- Importante à direita -->
+            <td style="width:78%; border:1px solid #000; border-left:none; padding:5px; vertical-align:top;">
+                <span class="label">Importante</span>
+                <div style="font-size:7pt; margin-top:5px; text-align:justify;">
+                    É contribuinte de ICMS qualquer pessoa física ou jurídica, que realize, com habitualidade ou em
+                    volume que caracterize intuito comercial, operações de circulação de mercadoria ou prestações de
+                    serviços de transportes interestadual e intermunicipal e de comunicação, ainda que as operações e
+                    prestações se iniciem no exterior (Lei Complementar nº 87/96, Art. 4º).
+                    <br><br>
+                    Constitui crime contra a ordem tributária suprimir ou reduzir tributo, ou contribuição social e
+                    qualquer acessório: quando negar ou deixar de fornecer, quando obrigatório, nota fiscal ou documento
+                    equivalente, relativa a venda de mercadoria ou prestação de serviço, efetivamente realizada ou
+                    fornecê-la em desacordo com a legislação. Sob pena de reclusão de 2 (dois) e 5 (cinco) anos, e
+                    multa (Lei 8.137/90, Art. 1º, V).
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ══ RODAPÉ ══ -->
+    <div style="border-top:1px solid #000; padding-top:4px;">
+        <table style="width:100%;">
+            <tr>
+                <td style="text-align: right; font-size:7pt;">
+                    Gerado por DECLARADATA (CEDSoft)
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

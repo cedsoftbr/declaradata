@@ -1,0 +1,150 @@
+name: API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'api/**'
+      - '.github/workflows/api.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: api
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install Poetry
+        run: pip install poetry==2.3.4
+
+      - name: Cache Poetry venv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ hashFiles('api/poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install --no-interaction
+
+      - name: Ruff lint
+        run: poetry run task lint
+
+      - name: Ruff format check
+        run: poetry run ruff format --check
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: declaradata_test
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d declaradata_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install system deps (WeasyPrint + xmlsec)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 \
+            libffi-dev shared-mime-info fonts-liberation fonts-dejavu-core \
+            libxml2-dev libxslt1-dev libxmlsec1-dev libxmlsec1-openssl pkg-config gcc
+
+      - name: Install Poetry
+        run: pip install poetry==2.3.4
+
+      - name: Cache Poetry venv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ hashFiles('api/poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install --no-interaction
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgres://ci:ci@localhost:5432/declaradata_test
+        run: poetry run task ci
+
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if audit is needed
+        id: audit_check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run_audit=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" | grep -qx 'api/poetry.lock'; then
+            echo "run_audit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_audit=false" >> "$GITHUB_OUTPUT"
+            echo "poetry.lock não mudou; audit ignorado."
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.audit_check.outputs.run_audit == 'true'
+        with:
+          python-version: '3.14'
+
+      - name: Install Poetry
+        if: steps.audit_check.outputs.run_audit == 'true'
+        run: pip install poetry==2.3.4
+
+      - name: Cache Poetry venv
+        if: steps.audit_check.outputs.run_audit == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ hashFiles('api/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.audit_check.outputs.run_audit == 'true'
+        run: poetry install --no-interaction
+
+      - name: poetry audit
+        if: steps.audit_check.outputs.run_audit == 'true'
+        run: poetry audit
