@@ -32,6 +32,7 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('profile', 'superadmin')
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser deve ter is_staff=True.')
@@ -207,15 +208,14 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         self.username = self.email
-        if (
-            self.is_superuser
-            or self.is_staff
-            or self.profile == self.Profile.SUPERADMIN
-        ):
-            self.profile = self.Profile.SUPERADMIN
+        if self.profile == self.Profile.SUPERADMIN:
             self.is_staff = True
+            self.is_superuser = True
             self.can_manage_users = True
         else:
+            # profile != SUPERADMIN tem precedência sobre is_staff/is_superuser
+            self.is_staff = False
+            self.is_superuser = False
             if self.profile == self.Profile.EMISSOR and self.can_manage_users:
                 self.profile = self.Profile.ADMIN
             self.can_manage_users = self.profile == self.Profile.ADMIN

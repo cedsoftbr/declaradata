@@ -474,11 +474,17 @@ class UserManageSerializer(serializers.ModelSerializer):
 
         if request.user.is_superadmin:
             if profile is None:
-                attrs['profile'] = User.Profile.EMISSOR
+                # Em PATCH, preserva o profile da instância; em POST, default emissor
+                instance_profile = getattr(self.instance, 'profile', None)
+                attrs['profile'] = instance_profile or User.Profile.EMISSOR
             effective_profile = attrs.get('profile')
-            if (
+            if effective_profile == User.Profile.SUPERADMIN:
+                # Superadmin não pertence a nenhuma empresa
+                attrs['company'] = None
+            elif (
                 effective_profile in {User.Profile.ADMIN, User.Profile.EMISSOR}
                 and not company
+                and not getattr(self.instance, 'company_id', None)
             ):
                 raise serializers.ValidationError({
                     'company_id': 'Perfis Admin e Emissor precisam de empresa.'
@@ -489,7 +495,8 @@ class UserManageSerializer(serializers.ModelSerializer):
         # Admin empresa: só administra usuários da própria empresa
         attrs['company'] = request.user.company
         if profile is None:
-            attrs['profile'] = User.Profile.EMISSOR
+            instance_profile = getattr(self.instance, 'profile', None)
+            attrs['profile'] = instance_profile or User.Profile.EMISSOR
         if attrs.get('profile') == User.Profile.SUPERADMIN:
             raise serializers.ValidationError({
                 'profile': 'Você não pode criar/editar usuários Superadmin.'

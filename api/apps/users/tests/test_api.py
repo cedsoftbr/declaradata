@@ -113,25 +113,21 @@ class UserAPITests(APITestCase):  # noqa: PLR0904
         self.client.force_authenticate(user=self.superadmin)
         url = reverse('user-list')
 
-        # Create user
+        # Superadmin cria outro superadmin (sem empresa)
         unique_email = f'staff_{uuid.uuid4()}@test.com'
         data = {
             'email': unique_email,
-            'is_staff': True,
-            'company_id': self.company.id,
-            'profile': User.Profile.EMISSOR,
+            'profile': User.Profile.SUPERADMIN,
         }
         response = self.client.post(url, data)
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['is_staff'] is True
+        assert response.data['company_id'] is None
 
         # Update user
         user_id = response.data['id']
         url_detail = reverse('user-detail', kwargs={'pk': user_id})
-        # Re-send company_id to satisfy profile validation for Admin/Emissor
-        response = self.client.patch(
-            url_detail, {'is_active': False, 'company_id': self.company.id}
-        )
+        response = self.client.patch(url_detail, {'is_active': False})
         assert response.status_code == status.HTTP_200_OK
         assert response.data['is_active'] is False
 

@@ -92,6 +92,7 @@ class UserFactory(DjangoModelFactory):
 class SuperAdminFactory(UserFactory):
     """Superadmin com acesso irrestrito."""
 
+    profile = 'superadmin'
     is_staff = True
     is_superuser = True
     company = None
