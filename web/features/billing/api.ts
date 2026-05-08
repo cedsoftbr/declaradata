@@ -72,4 +72,10 @@ export const invoicesApi = {
       method: 'POST',
       token,
     }),
+
+  monthlySummary: (token: string, companyId?: string) =>
+    request<{ to_receive: string; received: string }>(
+      `/api/billing/invoices/monthly-summary/${companyId ? `?company=${companyId}` : ''}`,
+      { token }
+    ),
 }

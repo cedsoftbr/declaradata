@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import {
   Card,
   CardAction,
@@ -15,6 +15,8 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
 } from '@/components/ui/chart'
 import {
   Select,
@@ -27,9 +29,13 @@ import { shipmentsApi } from '@/features/shipments/api'
 import { useAuth } from './providers/auth-provider'
 
 const chartConfig = {
-  count: {
-    label: 'DCes',
-    color: 'var(--foreground)',
+  producao: {
+    label: 'Produção',
+    color: '#3b82f6',
+  },
+  homologacao: {
+    label: 'Homologação',
+    color: '#f97316',
   },
 } satisfies ChartConfig
 
@@ -39,33 +45,33 @@ const PERIOD_OPTIONS = [
   { value: '90', label: 'Últimos 90 dias' },
 ]
 
-function fillDailyGaps(
-  data: { date: string; count: number }[],
-  days: number
-): { date: string; count: number }[] {
-  const map = new Map(data.map(d => [d.date, d.count]))
-  const result: { date: string; count: number }[] = []
-  const today = new Date()
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    const key = d.toISOString().slice(0, 10)
-    result.push({ date: key, count: map.get(key) ?? 0 })
-  }
-  return result
+type ChartRow = {
+  date: string
+  producao: number
+  homologacao: number
 }
 
-function average(data: { count: number }[]) {
-  if (!data.length) return 0
-  return Math.round(data.reduce((s, d) => s + d.count, 0) / data.length)
+function buildChartData(
+  byAmbient: Record<'1' | '2' | '3', Record<string, number>>,
+  days: number
+): ChartRow[] {
+  const today = new Date()
+  return Array.from({ length: days }, (_, i) => {
+    const d = new Date(today)
+    d.setDate(d.getDate() - (days - 1 - i))
+    const key = d.toISOString().slice(0, 10)
+    return {
+      date: key,
+      producao: byAmbient['1'][key] ?? 0,
+      homologacao: byAmbient['2'][key] ?? 0,
+    }
+  })
 }
 
 export function ChartDailyEmissions() {
   const { user, getAccessToken, isAuthenticated, isInitializing } = useAuth()
   const [days, setDays] = React.useState('30')
-  const [chartData, setChartData] = React.useState<{ date: string; count: number }[]>(
-    []
-  )
+  const [chartData, setChartData] = React.useState<ChartRow[]>([])
   const [loading, setLoading] = React.useState(false)
   const [isMounted, setIsMounted] = React.useState(false)
 
@@ -82,23 +88,19 @@ export function ChartDailyEmissions() {
     setLoading(true)
     shipmentsApi
       .dailyEmissions(token, Number(days))
-      .then(data => setChartData(fillDailyGaps(data, Number(days))))
+      .then(data => setChartData(buildChartData(data.by_ambient, Number(days))))
       .catch(() => setChartData([]))
       .finally(() => setLoading(false))
   }, [days, isAuthenticated, isSuperAdmin, getAccessToken])
 
   if (!isMounted || isInitializing || !isAuthenticated || !isSuperAdmin) return null
 
-  const avg = average(chartData)
-
   return (
     <Card className="pt-0 shadow-sm border rounded-2xl">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1">
           <CardTitle>Emissões de DCe — Todas as Empresas</CardTitle>
-          <CardDescription>
-            Declarações autorizadas por dia · média {avg}/dia
-          </CardDescription>
+          <CardDescription>Declarações autorizadas por dia</CardDescription>
         </div>
         <CardAction>
           <Select value={days} onValueChange={v => v && setDays(v)}>
@@ -161,28 +163,24 @@ export function ChartDailyEmissions() {
                   />
                 }
               />
-              {avg > 0 && (
-                <ReferenceLine
-                  y={avg}
-                  stroke="var(--muted-foreground)"
-                  strokeDasharray="4 4"
-                  strokeWidth={1}
-                  label={{
-                    value: `média ${avg}`,
-                    position: 'insideTopRight',
-                    fontSize: 11,
-                    fill: 'var(--muted-foreground)',
-                  }}
-                />
-              )}
+              <ChartLegend content={<ChartLegendContent />} />
               <Line
-                dataKey="count"
+                dataKey="producao"
                 type="natural"
-                stroke="var(--color-count)"
+                stroke="var(--color-producao)"
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, strokeWidth: 0, fill: 'var(--color-count)' }}
+                activeDot={{ r: 4, strokeWidth: 0 }}
               />
+              <Line
+                dataKey="homologacao"
+                type="natural"
+                stroke="var(--color-homologacao)"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, strokeWidth: 0 }}
+              />
+
             </LineChart>
           </ChartContainer>
         )}

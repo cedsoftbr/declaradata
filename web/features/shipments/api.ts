@@ -180,7 +180,7 @@ export const shipmentsApi = {
   },
 
   dailyEmissions: (token: string, days: number = 30) =>
-    request<{ date: string; count: number }[]>(
+    request<{ by_ambient: Record<'1' | '2' | '3', Record<string, number>> }>(
       `/api/shipments/daily-emissions/?days=${days}`,
       { token }
     ),
@@ -188,6 +188,21 @@ export const shipmentsApi = {
   topEmitters: (token: string, days: number = 30) =>
     request<{ company: string; count: number }[]>(
       `/api/shipments/top-emitters/?days=${days}`,
+      { token }
+    ),
+
+  ambientSummary: (token: string, companyId?: string) =>
+    request<{
+      producao: { count: number }
+      homologacao: { count: number }
+    }>(
+      `/api/shipments/ambient-summary/${companyId ? `?company=${companyId}` : ''}`,
+      { token }
+    ),
+
+  platformSummary: (token: string, companyId?: string) =>
+    request<{ active_companies: number; active_users: number }>(
+      `/api/shipments/platform-summary/${companyId ? `?company=${companyId}` : ''}`,
       { token }
     ),
 }

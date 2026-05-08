@@ -1,71 +1,66 @@
 'use client'
 
-import { DollarSign } from 'lucide-react'
+import * as React from 'react'
 import { ChartDailyEmissions } from '@/components/chart-daily-emissions'
 import { ChartTopEmitters } from '@/components/chart-top-emitters'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardAmbientSummary } from '@/components/card-ambient-summary'
+import { CardPlatformSummary } from '@/components/card-platform-summary'
+import { CardBillingSummary } from '@/components/card-billing-summary'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { companiesApi, type Company } from '@/features/companies/api'
+import { useAuth } from '@/components/providers/auth-provider'
 
 export default function DashboardPage() {
+  const { getAccessToken, isAuthenticated } = useAuth()
+  const [companies, setCompanies] = React.useState<Company[]>([])
+  const [companyId, setCompanyId] = React.useState<string | undefined>(undefined)
+
+  React.useEffect(() => {
+    if (!isAuthenticated) return
+    const token = getAccessToken()
+    if (!token) return
+    companiesApi
+      .list(token)
+      .then(data => setCompanies(data.results))
+      .catch(() => setCompanies([]))
+  }, [isAuthenticated, getAccessToken])
+
   return (
     <div className="space-y-6">
-      {/* Grid 4 colunas: gráfico ocupa col-span-2 row-span-2 (últimos 2 da linha 1 + 2 da linha 2) */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2">
-        <Card className="rounded-2xl shadow-sm border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Indicador 1
-            </CardTitle>
-            <DollarSign className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">—</p>
-            <p className="text-xs text-muted-foreground mt-1">Pendente</p>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-between">
+        <NativeSelect
+          value={companyId ?? ''}
+          onChange={e => setCompanyId(e.target.value || undefined)}
+          wrapperClassName="w-[260px]"
+        >
+          <NativeSelectOption value="">Todas as empresas</NativeSelectOption>
+          {companies.map(c => (
+            <NativeSelectOption key={c.id} value={c.id}>
+              {c.trade_name || c.name}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+      </div>
 
-        <Card className="rounded-2xl shadow-sm border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Indicador 2
-            </CardTitle>
-            <DollarSign className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">—</p>
-            <p className="text-xs text-muted-foreground mt-1">Pendente</p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 lg:grid-cols-5 lg:grid-rows-2">
+        {/* Linha 1: 3 cards */}
+        <div className="lg:col-span-3 grid gap-4 grid-cols-1 sm:grid-cols-3">
+          <CardAmbientSummary ambient="producao" companyId={companyId} />
+          <CardAmbientSummary ambient="homologacao" companyId={companyId} />
+          <CardPlatformSummary metric="active_companies" companyId={companyId} />
+        </div>
 
-        {/* Top Emitters: ocupa as últimas 2 colunas × 2 linhas */}
-        <div className="md:col-span-2 lg:col-span-2 lg:row-span-2">
+        {/* Top Emitters: ocupa 2 colunas × 2 linhas */}
+        <div className="lg:col-span-2 lg:row-span-2">
           <ChartTopEmitters />
         </div>
 
-        <Card className="rounded-2xl shadow-sm border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Indicador 3
-            </CardTitle>
-            <DollarSign className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">—</p>
-            <p className="text-xs text-muted-foreground mt-1">Pendente</p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-sm border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Indicador 4
-            </CardTitle>
-            <DollarSign className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">—</p>
-            <p className="text-xs text-muted-foreground mt-1">Pendente</p>
-          </CardContent>
-        </Card>
+        {/* Linha 2: 3 cards */}
+        <div className="lg:col-span-3 grid gap-4 grid-cols-1 sm:grid-cols-3">
+          <CardPlatformSummary metric="active_users" companyId={companyId} />
+          <CardBillingSummary metric="to_receive" companyId={companyId} />
+          <CardBillingSummary metric="received" companyId={companyId} />
+        </div>
       </div>
 
       <ChartDailyEmissions />

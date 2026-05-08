@@ -1,5 +1,6 @@
 from typing import ClassVar
 
+from django.db.models import Sum
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
@@ -67,3 +68,30 @@ class InvoiceViewSet(
         invoice.paid_at = timezone.now()
         invoice.save(update_fields=['status', 'paid_at', 'updated_at'])
         return Response(InvoiceSerializer(invoice).data, status=status.HTTP_200_OK)
+
+    @staticmethod
+    @action(detail=False, methods=['get'], url_path='monthly-summary')
+    def monthly_summary(request):  # noqa: ARG004
+        """
+        GET /api/invoices/monthly-summary/
+        Retorna valor a receber e valor já pago no mês corrente.
+        """
+        now = timezone.now()
+        qs = Invoice.objects.filter(year=now.year, month=now.month)
+
+        company_id = request.query_params.get('company')
+        if company_id:
+            qs = qs.filter(company_id=company_id)
+
+        to_receive = qs.filter(
+            status__in=[Invoice.Status.PENDING, Invoice.Status.OVERDUE]
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        received = qs.filter(
+            status=Invoice.Status.PAID
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        return Response({
+            'to_receive': str(to_receive),
+            'received': str(received),
+        })
