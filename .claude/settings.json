@@ -19,7 +19,26 @@
       "Bash(sudo tee *)",
       "Bash(sudo apt *)",
       "Bash(gh auth *)",
-      "Bash(psql postgres://cesar:1306@localhost:5432/declaradata_test -c \"SELECT 1\")"
+      "Bash(psql postgres://cesar:1306@localhost:5432/declaradata_test -c \"SELECT 1\")",
+      "Bash(poetry run *)",
+      "Bash(ls .venv/bin/python*)",
+      "Bash(.venv/bin/python manage.py makemigrations persons --name=\"add_environment_to_personcertificate\")",
+      "Bash(.venv/bin/python -m ruff check apps/shipments/views.py)",
+      "Bash(python3 -m ruff check apps/users/models.py apps/users/serializers.py)",
+      "Bash(ruff check *)",
+      "Bash(~/.local/share/pyenv/shims/ruff check *)",
+      "Bash(xargs -I{} {}/bin/ruff check apps/users/models.py apps/users/serializers.py)",
+      "Bash(POETRY_PYTHON=/usr/bin/python3.12 poetry run ruff check apps/users/models.py apps/users/serializers.py)",
+      "Bash(pyenv exec *)",
+      "Bash(PYENV_VERSION=3.14.0 pyenv exec poetry run ruff check apps/users/models.py apps/users/serializers.py)",
+      "Bash(~/.pyenv/versions/3.14.0/bin/ruff check *)",
+      "Bash(/home/cesar/Projetos/CEDSoft/declaradata/api/.venv/bin/ruff check *)",
+      "Bash(.venv/bin/pytest apps/users/tests/ -x -q)",
+      "Bash(.venv/bin/pytest apps/users/tests/test_api.py::UserAPITests::test_superadmin_user_crud -x -q -s)",
+      "Bash(.venv/bin/pytest apps/users/tests/test_api.py::UserAPITests::test_superadmin_user_crud -x -s)",
+      "Bash(.venv/bin/pytest -x -q)",
+      "Bash(.venv/bin/pytest apps/shipments/tests/test_multitenant.py::SuperAdminAcessoTotalTests::test_superadmin_acessa_person_de_qualquer_empresa -x -s)",
+      "Bash(.venv/bin/python manage.py shell -c ' *)"
     ]
   }
 }

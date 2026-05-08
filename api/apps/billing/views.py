@@ -71,7 +71,7 @@ class InvoiceViewSet(
 
     @staticmethod
     @action(detail=False, methods=['get'], url_path='monthly-summary')
-    def monthly_summary(request):  # noqa: ARG004
+    def monthly_summary(request):
         """
         GET /api/invoices/monthly-summary/
         Retorna valor a receber e valor já pago no mês corrente.
@@ -83,13 +83,19 @@ class InvoiceViewSet(
         if company_id:
             qs = qs.filter(company_id=company_id)
 
-        to_receive = qs.filter(
-            status__in=[Invoice.Status.PENDING, Invoice.Status.OVERDUE]
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        to_receive = (
+            qs.filter(
+                status__in=[Invoice.Status.PENDING, Invoice.Status.OVERDUE]
+            ).aggregate(total=Sum('amount'))['total']
+            or 0
+        )
 
-        received = qs.filter(
-            status=Invoice.Status.PAID
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        received = (
+            qs.filter(status=Invoice.Status.PAID).aggregate(total=Sum('amount'))[
+                'total'
+            ]
+            or 0
+        )
 
         return Response({
             'to_receive': str(to_receive),

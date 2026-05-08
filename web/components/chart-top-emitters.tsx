@@ -45,7 +45,11 @@ const PERIOD_OPTIONS = [
   { value: '90', label: 'Últimos 90 dias' },
 ]
 
-export function ChartTopEmitters() {
+interface Props {
+  companyId?: string
+}
+
+export function ChartTopEmitters({ companyId }: Props) {
   const { user, getAccessToken, isAuthenticated, isInitializing } = useAuth()
   const [days, setDays] = React.useState('30')
   const [data, setData] = React.useState<{ company: string; count: number }[]>([])
@@ -65,11 +69,11 @@ export function ChartTopEmitters() {
 
     setLoading(true)
     shipmentsApi
-      .topEmitters(token, Number(days))
+      .topEmitters(token, Number(days), companyId)
       .then(setData)
       .catch(() => setData([]))
       .finally(() => setLoading(false))
-  }, [days, isAuthenticated, isSuperAdmin, getAccessToken])
+  }, [days, isAuthenticated, isSuperAdmin, getAccessToken, companyId])
 
   if (!isMounted || isInitializing || !isAuthenticated || !isSuperAdmin) return null
 

@@ -27,7 +27,10 @@ interface Props {
 
 export function CardBillingSummary({ metric, companyId }: Props) {
   const { user, getAccessToken, isAuthenticated, isInitializing } = useAuth()
-  const [data, setData] = React.useState<{ to_receive: string; received: string } | null>(null)
+  const [data, setData] = React.useState<{
+    to_receive: string
+    received: string
+  } | null>(null)
   const [isMounted, setIsMounted] = React.useState(false)
 
   React.useEffect(() => {
@@ -56,9 +59,7 @@ export function CardBillingSummary({ metric, companyId }: Props) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-3xl font-bold">
-          {data ? formatBRL(data[metric]) : '—'}
-        </p>
+        <p className="text-3xl font-bold">{data ? formatBRL(data[metric]) : '—'}</p>
       </CardContent>
     </Card>
   )

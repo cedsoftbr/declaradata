@@ -13,10 +13,10 @@ import {
 import {
   type ChartConfig,
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
 } from '@/components/ui/chart'
 import {
   Select,
@@ -68,7 +68,11 @@ function buildChartData(
   })
 }
 
-export function ChartDailyEmissions() {
+interface Props {
+  companyId?: string
+}
+
+export function ChartDailyEmissions({ companyId }: Props) {
   const { user, getAccessToken, isAuthenticated, isInitializing } = useAuth()
   const [days, setDays] = React.useState('30')
   const [chartData, setChartData] = React.useState<ChartRow[]>([])
@@ -87,11 +91,11 @@ export function ChartDailyEmissions() {
     if (!token) return
     setLoading(true)
     shipmentsApi
-      .dailyEmissions(token, Number(days))
+      .dailyEmissions(token, Number(days), companyId)
       .then(data => setChartData(buildChartData(data.by_ambient, Number(days))))
       .catch(() => setChartData([]))
       .finally(() => setLoading(false))
-  }, [days, isAuthenticated, isSuperAdmin, getAccessToken])
+  }, [days, isAuthenticated, isSuperAdmin, getAccessToken, companyId])
 
   if (!isMounted || isInitializing || !isAuthenticated || !isSuperAdmin) return null
 
@@ -180,7 +184,6 @@ export function ChartDailyEmissions() {
                 dot={false}
                 activeDot={{ r: 4, strokeWidth: 0 }}
               />
-
             </LineChart>
           </ChartContainer>
         )}

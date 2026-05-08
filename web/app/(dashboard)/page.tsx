@@ -1,14 +1,14 @@
 'use client'
 
 import * as React from 'react'
+import { CardAmbientSummary } from '@/components/card-ambient-summary'
+import { CardBillingSummary } from '@/components/card-billing-summary'
+import { CardPlatformSummary } from '@/components/card-platform-summary'
 import { ChartDailyEmissions } from '@/components/chart-daily-emissions'
 import { ChartTopEmitters } from '@/components/chart-top-emitters'
-import { CardAmbientSummary } from '@/components/card-ambient-summary'
-import { CardPlatformSummary } from '@/components/card-platform-summary'
-import { CardBillingSummary } from '@/components/card-billing-summary'
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
-import { companiesApi, type Company } from '@/features/companies/api'
 import { useAuth } from '@/components/providers/auth-provider'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
+import { type Company, companiesApi } from '@/features/companies/api'
 
 export default function DashboardPage() {
   const { getAccessToken, isAuthenticated } = useAuth()
@@ -52,7 +52,7 @@ export default function DashboardPage() {
 
         {/* Top Emitters: ocupa 2 colunas × 2 linhas */}
         <div className="lg:col-span-2 lg:row-span-2">
-          <ChartTopEmitters />
+          <ChartTopEmitters companyId={companyId} />
         </div>
 
         {/* Linha 2: 3 cards */}
@@ -63,7 +63,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <ChartDailyEmissions />
+      <ChartDailyEmissions companyId={companyId} />
     </div>
   )
 }

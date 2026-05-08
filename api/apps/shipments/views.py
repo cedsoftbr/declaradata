@@ -380,116 +380,6 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             headers={'Content-Disposition': f'attachment; filename="{filename}"'},
         )
 
-    @staticmethod
-    @action(detail=False, methods=['get'], url_path='daily-emissions')
-    def daily_emissions(request):
-        """
-        GET /api/shipments/daily-emissions/?days=30
-        """
-        if not (request.user.is_authenticated and request.user.is_superadmin):
-            raise PermissionDenied('Apenas superadmin pode acessar este endpoint.')
-
-        try:
-            days = int(request.query_params.get('days', 30))
-        except ValueError:
-            days = 30
-        days = max(1, min(days, 365))
-
-        since = timezone.now() - timezone.timedelta(days=days)
-
-        qs = (
-            Shipment.objects
-            .filter(status=Shipment.Status.AUTHORIZED, dh_emi__gte=since)
-            .annotate(day=TruncDate('dh_emi'))
-            .values('day', 'tp_amb')
-            .annotate(count=Count('id'))
-            .order_by('day')
-        )
-
-        by_ambient: dict[str, dict[str, int]] = {'1': {}, '2': {}, '3': {}}
-        for row in qs:
-            by_ambient[str(row['tp_amb'])][row['day'].isoformat()] = row['count']
-
-        return Response({'by_ambient': by_ambient})
-
-    @staticmethod
-    @action(detail=False, methods=['get'], url_path='top-emitters')
-    def top_emitters(request):
-        """
-        GET /api/shipments/top-emitters/?days=30
-        """
-        if not (request.user.is_authenticated and request.user.is_superadmin):
-            raise PermissionDenied('Apenas superadmin pode acessar este endpoint.')
-
-        try:
-            days = int(request.query_params.get('days', 30))
-        except ValueError:
-            days = 30
-        days = max(1, min(days, 365))
-
-        since = timezone.now() - timezone.timedelta(days=days)
-
-        rows = (
-            Shipment.objects
-            .filter(
-                status=Shipment.Status.AUTHORIZED,
-                tp_amb=Shipment.Ambient.PRODUCAO,
-                dh_emi__gte=since,
-            )
-            .values('company__name')
-            .annotate(count=Count('id'))
-            .order_by('-count')[:6]
-        )
-
-        return Response([
-            {'company': row['company__name'], 'count': row['count']} for row in rows
-        ])
-
-    @staticmethod
-    @action(detail=False, methods=['get'], url_path='ambient-summary')
-    def ambient_summary(request):
-        """
-        GET /api/shipments/ambient-summary/?company=<id>
-        Conta emitentes distintos com série ativa por ambiente.
-        Sem company: todos os emitentes da plataforma.
-        """
-        if not (request.user.is_authenticated and request.user.is_superadmin):
-            raise PermissionDenied('Apenas superadmin pode acessar este endpoint.')
-
-        company_id = request.query_params.get('company')
-        base = Series.objects.filter(is_active=True)
-        if company_id:
-            base = base.filter(company_id=company_id)
-
-        producao_count = base.filter(ambient=Series.Ambient.PRODUCAO).values('emitter').distinct().count()
-        homologacao_count = base.filter(ambient=Series.Ambient.HOMOLOGACAO).values('emitter').distinct().count()
-
-        return Response({
-            'producao': {'count': producao_count},
-            'homologacao': {'count': homologacao_count},
-        })
-
-    @staticmethod
-    @action(detail=False, methods=['get'], url_path='platform-summary')
-    def platform_summary(request):
-        """
-        GET /api/shipments/platform-summary/
-        Retorna contagem de empresas e usuários ativos na plataforma.
-        """
-        if not (request.user.is_authenticated and request.user.is_superadmin):
-            raise PermissionDenied('Apenas superadmin pode acessar este endpoint.')
-
-        company_id = request.query_params.get('company')
-
-        if company_id:
-            active_users = User.objects.filter(is_active=True, company_id=company_id).count()
-            return Response({'active_companies': 1, 'active_users': active_users})
-
-        return Response({
-            'active_companies': Company.objects.filter(is_active=True).count(),
-            'active_users': User.objects.filter(is_active=True).count(),
-        })
-
     @action(detail=True, methods=['post'], url_path='download-token')
     def download_token(self, request, pk=None):
         _ = pk
@@ -775,6 +665,109 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             content_type='application/pdf',
             headers={'Content-Disposition': 'inline; filename="DCE_Lote.pdf"'},
         )
+
+
+class DashboardViewSet(viewsets.GenericViewSet):
+    """Endpoints de dashboard exclusivos para superadmin."""
+
+    permission_classes: ClassVar[list] = [IsAuthenticated]
+
+    @staticmethod
+    def _check_superadmin(request):
+        if not (request.user.is_authenticated and request.user.is_superadmin):
+            raise PermissionDenied('Apenas superadmin pode acessar este endpoint.')
+
+    @staticmethod
+    def _parse_days(request) -> int:
+        try:
+            days = int(request.query_params.get('days', 30))
+        except ValueError:
+            days = 30
+        return max(1, min(days, 365))
+
+    @action(detail=False, methods=['get'], url_path='daily-emissions')
+    def daily_emissions(self, request):
+        self._check_superadmin(request)
+        days = self._parse_days(request)
+        since = timezone.now() - timezone.timedelta(days=days)
+        company_id = request.query_params.get('company')
+        filters: dict = {'status': Shipment.Status.AUTHORIZED, 'dh_emi__gte': since}
+        if company_id:
+            filters['company_id'] = company_id
+        qs = (
+            Shipment.objects
+            .filter(**filters)
+            .annotate(day=TruncDate('dh_emi'))
+            .values('day', 'tp_amb')
+            .annotate(count=Count('id'))
+            .order_by('day')
+        )
+        by_ambient: dict[str, dict[str, int]] = {'1': {}, '2': {}, '3': {}}
+        for row in qs:
+            by_ambient[str(row['tp_amb'])][row['day'].isoformat()] = row['count']
+        return Response({'by_ambient': by_ambient})
+
+    @action(detail=False, methods=['get'], url_path='top-emitters')
+    def top_emitters(self, request):
+        self._check_superadmin(request)
+        days = self._parse_days(request)
+        since = timezone.now() - timezone.timedelta(days=days)
+        company_id = request.query_params.get('company')
+        filters: dict = {
+            'status': Shipment.Status.AUTHORIZED,
+            'tp_amb': Shipment.Ambient.PRODUCAO,
+            'dh_emi__gte': since,
+        }
+        if company_id:
+            filters['company_id'] = company_id
+        rows = (
+            Shipment.objects
+            .filter(**filters)
+            .values('company__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')[:6]
+        )
+        return Response([
+            {'company': row['company__name'], 'count': row['count']} for row in rows
+        ])
+
+    @action(detail=False, methods=['get'], url_path='ambient-summary')
+    def ambient_summary(self, request):
+        from apps.persons.models import PersonCertificate  # noqa: PLC0415
+
+        self._check_superadmin(request)
+        company_id = request.query_params.get('company')
+        base = PersonCertificate.objects.filter(cert_pfx__isnull=False)
+        if company_id:
+            base = base.filter(person__company_id=company_id)
+        return Response({
+            'producao': {
+                'count': base.filter(
+                    environment=PersonCertificate.Ambient.PRODUCAO
+                ).count()
+            },
+            'homologacao': {
+                'count': base.filter(
+                    environment=PersonCertificate.Ambient.HOMOLOGACAO
+                ).count()
+            },
+        })
+
+    @action(detail=False, methods=['get'], url_path='platform-summary')
+    def platform_summary(self, request):
+        self._check_superadmin(request)
+        company_id = request.query_params.get('company')
+        if company_id:
+            return Response({
+                'active_companies': 1,
+                'active_users': User.objects.filter(
+                    is_active=True, company_id=company_id
+                ).count(),
+            })
+        return Response({
+            'active_companies': Company.objects.filter(is_active=True).count(),
+            'active_users': User.objects.filter(is_active=True).count(),
+        })
 
 
 class ShipmentExportLogViewSet(viewsets.ReadOnlyModelViewSet):
