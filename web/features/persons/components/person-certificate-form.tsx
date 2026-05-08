@@ -279,7 +279,7 @@ export function PersonCertificateForm({
         setStatus(hasCert ? data : null)
         onStatusChange?.(hasCert)
         if (hasCert) {
-          setValue('environment', environmentWithCertificate)
+          setValue('environment', data.environment ?? environmentWithCertificate)
         } else {
           setValue('environment', allowSimulated ? 3 : 2)
         }
@@ -337,6 +337,7 @@ export function PersonCertificateForm({
       const formData = new FormData()
       formData.append('certificate', certFile)
       formData.append('password', certPass)
+      formData.append('environment', String(environment))
 
       const res = await call(`/api/persons/${personId}/certificate/`, {
         method: 'POST',

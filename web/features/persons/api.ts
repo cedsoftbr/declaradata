@@ -52,6 +52,7 @@ export type Person = {
 
 export type PersonCertificateStatus = {
   has_certificate: boolean
+  environment: 1 | 2
   cert_expires_at: string | null
   cert_uploaded_at: string | null
 }

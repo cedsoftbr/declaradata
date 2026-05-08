@@ -125,6 +125,11 @@ class PersonCertificateUploadSerializer(serializers.Serializer):
         write_only=True,
         help_text='Senha de proteção do arquivo .pfx.',
     )
+    environment = serializers.ChoiceField(
+        choices=PersonCertificate.Ambient.choices,
+        required=False,
+        help_text='Ambiente de emissão: 1=Produção, 2=Homologação.',
+    )
 
     @staticmethod
     def validate(attrs):
@@ -164,6 +169,7 @@ class PersonCertificateStatusSerializer(serializers.ModelSerializer):
         model = PersonCertificate
         fields = (
             'has_certificate',
+            'environment',
             'cert_expires_at',
             'cert_uploaded_at',
         )

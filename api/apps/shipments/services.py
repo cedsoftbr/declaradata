@@ -334,9 +334,10 @@ def _handle_sefaz_or_simulate(shipment, xml_signed_bytes):
         and hasattr(emitter, 'certificate')
         and bool(emitter.certificate and emitter.certificate.cert_pfx)
     )
+    emitter_environment = emitter.certificate.environment if emitter_has_cert else None
     is_real = (
         shipment.tp_amb in {Shipment.Ambient.PRODUCAO, Shipment.Ambient.HOMOLOGACAO}
-        and company.environment == shipment.tp_amb
+        and emitter_environment == shipment.tp_amb
         and emitter_has_cert
     )
     if is_real:

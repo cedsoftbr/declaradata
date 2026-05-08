@@ -37,7 +37,7 @@ def load_certificate(person):
     return private_key, cert, additional_certs or []
 
 
-def store_person_certificate(person, pfx_bytes, password, cert_obj):
+def store_person_certificate(person, pfx_bytes, password, cert_obj, environment=None):
     """
     Cifra e armazena (ou substitui) o certificado digital da pessoa emitente.
     """
@@ -50,15 +50,17 @@ def store_person_certificate(person, pfx_bytes, password, cert_obj):
     cert_record.cert_password = encrypt_str(password)
     cert_record.cert_expires_at = expires_at
     cert_record.cert_uploaded_at = timezone.now()
-    cert_record.save(
-        update_fields=[
-            'cert_pfx',
-            'cert_password',
-            'cert_expires_at',
-            'cert_uploaded_at',
-            'updated_at',
-        ]
-    )
+    update_fields = [
+        'cert_pfx',
+        'cert_password',
+        'cert_expires_at',
+        'cert_uploaded_at',
+        'updated_at',
+    ]
+    if environment is not None:
+        cert_record.environment = environment
+        update_fields.append('environment')
+    cert_record.save(update_fields=update_fields)
     return cert_record
 
 

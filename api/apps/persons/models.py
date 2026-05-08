@@ -116,12 +116,21 @@ class PersonAddress(models.Model):
 class PersonCertificate(models.Model):
     """Certificado digital A1 vinculado à pessoa emitente de DCe."""
 
+    class Ambient(models.IntegerChoices):
+        PRODUCAO = 1, 'Produção'
+        HOMOLOGACAO = 2, 'Homologação'
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid7, editable=False)
     person = models.OneToOneField(
         Person,
         on_delete=models.CASCADE,
         related_name='certificate',
         verbose_name='pessoa',
+    )
+    environment = models.PositiveSmallIntegerField(
+        default=Ambient.HOMOLOGACAO,
+        choices=Ambient.choices,
+        verbose_name='ambiente',
     )
 
     # Conteúdo do .pfx criptografado com Fernet (CERTIFICATE_ENCRYPTION_KEY).

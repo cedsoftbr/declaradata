@@ -217,9 +217,10 @@ class PersonViewSet(viewsets.ModelViewSet):
             pfx_bytes = serializer.validated_data['_pfx_bytes']
             password = serializer.validated_data['password']
             cert_obj = serializer.validated_data['_cert_obj']
+            environment = serializer.validated_data.get('environment')
 
             cert_record = store_person_certificate(
-                person, pfx_bytes, password, cert_obj
+                person, pfx_bytes, password, cert_obj, environment=environment
             )
             self._audit(PersonAuditLog.Action.CERT_UPLOAD, person)
             return Response(
