@@ -22,6 +22,7 @@ from .models import Person, PersonAddress
 from .serializers import (
     PersonAddressSerializer,
     PersonAuditLogSerializer,
+    PersonCertificateEnvironmentSerializer,
     PersonCertificateStatusSerializer,
     PersonCertificateUploadSerializer,
     PersonSerializer,
@@ -255,6 +256,33 @@ class PersonViewSet(viewsets.ModelViewSet):
                 'cert_uploaded_at': None,
             })
         return Response(PersonCertificateStatusSerializer(cert_record).data)
+
+    @action(
+        detail=True,
+        methods=['patch'],
+        url_path='certificate/environment',
+    )
+    def certificate_environment(self, request, pk=None):  # noqa: ARG002
+        """
+        PATCH /api/persons/{id}/certificate/environment/
+            Atualiza apenas o ambiente do certificado existente.
+        """
+        person = self.get_object()
+        cert_record = getattr(person, 'certificate', None)
+        if not cert_record or not cert_record.cert_pfx:
+            return Response(
+                {'detail': 'Pessoa não possui certificado cadastrado.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = PersonCertificateEnvironmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        cert_record.environment = serializer.validated_data['environment']
+        cert_record.save(update_fields=['environment', 'updated_at'])
+        self._audit(PersonAuditLog.Action.CERT_UPLOAD, person)
+        return Response(
+            PersonCertificateStatusSerializer(cert_record).data,
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=False, methods=['post'], url_path='import-excel')
     def import_excel(self, request):

@@ -160,6 +160,13 @@ class PersonCertificateUploadSerializer(serializers.Serializer):
         return attrs
 
 
+class PersonCertificateEnvironmentSerializer(serializers.Serializer):
+    environment = serializers.ChoiceField(
+        choices=PersonCertificate.Ambient.choices,
+        required=True,
+    )
+
+
 class PersonCertificateStatusSerializer(serializers.ModelSerializer):
     """Retorna apenas metadados do certificado — nunca o conteúdo."""
 

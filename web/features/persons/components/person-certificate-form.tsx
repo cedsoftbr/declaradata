@@ -307,12 +307,14 @@ export function PersonCertificateForm({
   }, [allowSimulated, environment, setValue])
 
   const prevEnvironmentRef = useRef<number | undefined>(undefined)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: call/personId/status são estáveis; dependências intencionalmente omitidas
   useEffect(() => {
     if (environment === 3) {
       prevEnvironmentRef.current = environment
       return
     }
     if (prevEnvironmentRef.current === environment) return
+    const prev = prevEnvironmentRef.current
     prevEnvironmentRef.current = environment
 
     const hasSeries = seriesValues?.some(s => s.ambient === environment)
@@ -326,7 +328,21 @@ export function PersonCertificateForm({
         ambient: environment as 1 | 2,
       })
     }
-  }, [environment, seriesValues?.some, append]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Salva o ambiente no certificado existente quando o usuário muda o select
+    if (prev !== undefined && status) {
+      call(`/api/persons/${personId}/certificate/environment/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ environment }),
+      })
+        .then(res => {
+          if (res.ok) toast.success('Ambiente atualizado.')
+          else toast.error('Erro ao salvar ambiente.')
+        })
+        .catch(() => toast.error('Erro ao salvar ambiente.'))
+    }
+  }, [environment, seriesValues?.some, append])
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: certificate upload process
   const handleUpload = async () => {
@@ -358,7 +374,6 @@ export function PersonCertificateForm({
       onStatusChange?.(hasCert)
 
       if (hasCert) {
-        setValue('environment', 2)
         const hasHomologSeries = seriesValues?.some(s => s.ambient === 2)
         if (!hasHomologSeries) {
           // Remove séries temporárias de Simulado (sem id) antes de adicionar a de Homologação
