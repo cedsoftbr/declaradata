@@ -42,7 +42,12 @@ from .serializers import (
     ShipmentExportLogSerializer,
     ShipmentListSerializer,
 )
-from .tasks import cancel_shipment_task, emit_shipment_task, export_shipments_xlsx_task
+from .tasks import (
+    bulk_pdf_task,
+    cancel_shipment_task,
+    emit_shipment_task,
+    export_shipments_xlsx_task,
+)
 
 logger = logging.getLogger('apps.shipments')
 
@@ -382,6 +387,73 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             content_type=(
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             ),
+            headers={'Content-Disposition': f'attachment; filename="{filename}"'},
+        )
+
+    @action(detail=False, methods=['post'], url_path='bulk-pdf/start')
+    def bulk_pdf_start(self, request):  # noqa: PLR6301
+        ids_str = request.query_params.get('ids', '')
+        if not ids_str:
+            raise serializers.ValidationError('Nenhum ID fornecido.')
+        ids = [i.strip() for i in ids_str.split(',') if i.strip()]
+        if len(ids) > MAX_BULK_PDF_IDS:
+            raise serializers.ValidationError(
+                f'Máximo de {MAX_BULK_PDF_IDS} remessas por lote.'
+            )
+        user = request.user
+        is_superadmin = hasattr(user, 'is_superadmin') and user.is_superadmin
+        company_id = None if is_superadmin else str(user.company_id)
+        task = bulk_pdf_task.delay(ids, str(user.id), company_id)
+        ShipmentExportLog.objects.create(
+            company=None if is_superadmin else user.company,
+            actor=user,
+            actor_email=user.email,
+            export_type='pdf_bulk',
+            shipment_count=len(ids),
+            filters_applied={'ids': ids},
+            ip_address=get_client_ip(request),
+            task_id=task.id,
+        )
+        return Response({'task_id': task.id})
+
+    @action(detail=False, methods=['get'], url_path='bulk-pdf/status')
+    def bulk_pdf_status(self, request):
+        task_id = request.query_params.get('task_id')
+        if not task_id:
+            raise serializers.ValidationError('task_id é obrigatório.')
+        task = AsyncResult(task_id)
+        if task.state in {'PENDING', 'STARTED', 'RETRY'}:
+            return Response({'state': task.state, 'ready': False})
+        if task.state == 'FAILURE':
+            return Response(
+                {'state': task.state, 'ready': False, 'error': str(task.result)},
+                status=500,
+            )
+        if task.state != 'SUCCESS':
+            return Response({'state': task.state, 'ready': False})
+        payload = self._validate_export_task_payload(task.result, request.user)
+        return Response({
+            'state': task.state,
+            'ready': True,
+            'filename': payload.get('filename') or 'dce_impressao.pdf',
+        })
+
+    @action(detail=False, methods=['get'], url_path='bulk-pdf/download')
+    def bulk_pdf_download(self, request):
+        task_id = request.query_params.get('task_id')
+        if not task_id:
+            raise serializers.ValidationError('task_id é obrigatório.')
+        task = AsyncResult(task_id)
+        if task.state != 'SUCCESS':
+            raise serializers.ValidationError(
+                'PDF ainda não finalizado. Aguarde e tente novamente.'
+            )
+        payload = self._validate_export_task_payload(task.result, request.user)
+        content = R2Storage().get_file(payload['key'])
+        filename = payload.get('filename') or 'dce_impressao.pdf'
+        return HttpResponse(
+            content,
+            content_type='application/pdf',
             headers={'Content-Disposition': f'attachment; filename="{filename}"'},
         )
 

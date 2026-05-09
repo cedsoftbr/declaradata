@@ -273,6 +273,43 @@ export default function ShipmentsPage() {
     }
   }
 
+  const pollBulkPdfStatus = async (taskId: string): Promise<boolean> => {
+    for (let i = 0; i < 180; i++) {
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      const statusRes = await call(`/api/shipments/bulk-pdf/status/?task_id=${taskId}`)
+      const statusData = (await statusRes.json().catch(() => ({}))) as ExportStatus
+
+      if (!statusRes.ok || statusData.state === 'FAILURE') {
+        throw new Error(statusData.error || statusData.detail || 'Falha ao gerar PDF.')
+      }
+      if (statusData.ready || statusData.state === 'SUCCESS') return true
+    }
+    throw new Error('Tempo esgotado ao gerar PDF.')
+  }
+
+  const downloadBulkPdf = async (taskId: string) => {
+    try {
+      const res = await call(`/api/shipments/bulk-pdf/download/?task_id=${taskId}`)
+      if (!res.ok) throw new Error('Falha ao baixar PDF.')
+
+      const fileBlob = await res.blob()
+      const disposition = res.headers.get('Content-Disposition') ?? ''
+      const match = disposition.match(/filename="?([^";]+)"?/)
+      const filename = match?.[1] || 'dce_impressao.pdf'
+
+      const blobUrl = URL.createObjectURL(fileBlob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(blobUrl)
+    } catch {
+      toast.error('Não foi possível baixar o PDF.')
+    }
+  }
+
   const handleBulkPrint = async () => {
     const selectedPrintable = shipments.filter(
       s => selected.has(s.id) && (s.status === 'authorized' || s.status === 'cancelled')
@@ -285,19 +322,30 @@ export default function ShipmentsPage() {
     setPrinting(true)
     try {
       const ids = selectedPrintable.map(s => s.id)
-      const res = await call(`/api/shipments/bulk-pdf/?ids=${ids.join(',')}`)
-
-      if (!res.ok) throw new Error()
-
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      window.open(url, '_blank')
-      toast.success(
-        `${selectedPrintable.length} documento(s) enviado(s) para impressão em lote.`
+      const startRes = await call(
+        `/api/shipments/bulk-pdf/start/?ids=${ids.join(',')}`,
+        { method: 'POST' }
       )
-    } catch {
-      toast.error('Erro ao preparar documentos para impressão.')
-    } finally {
+      if (!startRes.ok) throw new Error('Falha ao iniciar geração do PDF.')
+      const { task_id } = (await startRes.json()) as { task_id?: string }
+      if (!task_id) throw new Error('Tarefa de impressão não retornou ID.')
+
+      setPrinting(false)
+
+      await pollBulkPdfStatus(task_id)
+
+      addNotification({
+        title: 'PDF Disponível',
+        message: `PDF com ${selectedPrintable.length} documento(s) gerado com sucesso.`,
+        action: {
+          label: 'Baixar Agora',
+          onClick: () => downloadBulkPdf(task_id),
+        },
+      })
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Erro ao preparar impressão em lote.'
+      toast.error(msg)
       setPrinting(false)
     }
   }

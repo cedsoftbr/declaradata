@@ -1,3 +1,4 @@
+import io
 import logging
 from io import BytesIO
 
@@ -5,10 +6,12 @@ from celery import shared_task
 from django.db.models import Sum
 from django.utils import timezone
 from openpyxl import Workbook
+from pypdf import PdfReader, PdfWriter
 
 from apps.core.storage import R2Storage
 
 from .models import Shipment
+from .pdf_generator import generate_dce_pdf
 from .services import cancel_shipment, emit_shipment
 
 logger = logging.getLogger(__name__)
@@ -365,5 +368,53 @@ def export_shipments_xlsx_task(
         key,
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     )
+
+    return {'owner_user_id': requested_by_id, 'key': key, 'filename': filename}
+
+
+@shared_task(bind=True, max_retries=1)
+def bulk_pdf_task(
+    _self, shipment_ids: list[str], requested_by_id: str, company_id: str | None = None
+):
+    """Mescla PDFs de múltiplos DC-es em background e salva o resultado no R2."""
+    qs_filter: dict = {'id__in': shipment_ids}
+    if company_id:
+        qs_filter['company_id'] = company_id
+    shipments = (
+        Shipment.objects.filter(**qs_filter)
+        .select_related('company')
+        .order_by('number')
+    )
+
+    storage = R2Storage()
+    writer = PdfWriter()
+    for shipment in shipments:
+        if (
+            shipment.status == Shipment.Status.DRAFT
+            and shipment.tp_amb != Shipment.Ambient.SIMULADO
+        ):
+            continue
+        pdf_bytes = None
+        if shipment.pdf_key:
+            try:
+                pdf_bytes = storage.get_file(shipment.pdf_key)
+            except Exception as e:
+                logger.warning(
+                    'bulk_pdf_task: erro ao buscar PDF %s no R2: %s', shipment.id, e
+                )
+        if not pdf_bytes:
+            pdf_bytes = generate_dce_pdf(shipment)
+        writer.append(PdfReader(io.BytesIO(pdf_bytes)))
+
+    buf = io.BytesIO()
+    writer.write(buf)
+
+    now = timezone.now()
+    filename = f'dce_impressao_{now.strftime("%Y%m%d_%H%M%S")}.pdf'
+    key = (
+        f'shipments/bulk-pdf/{requested_by_id}'
+        f'/{now.strftime("%Y")}/{now.strftime("%m")}/{filename}'
+    )
+    storage.upload_file(buf.getvalue(), key, 'application/pdf')
 
     return {'owner_user_id': requested_by_id, 'key': key, 'filename': filename}
