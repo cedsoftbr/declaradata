@@ -5,6 +5,7 @@ import {
   Contact,
   CreditCard,
   FileStack,
+  FileText,
   LayoutDashboard,
   MapPin,
   PackageSearch,
@@ -60,27 +61,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return items
   }
 
-  const APP_NAME = process.env.NEXT_PUBLIC_NAME ?? 'Declaradata'
-
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader className="p-2 pb-0">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-foreground text-background shrink-0">
+                <FileText className="size-4" />
+              </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="text-xl font-bold uppercase tracking-tight">
-                  {APP_NAME}
+                <span className="text-sm font-bold uppercase tracking-tight">
+                  INTEGRADATA
                 </span>
-                {isSuperUser ? (
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
-                    Administração
-                  </span>
-                ) : user?.company_name ? (
-                  <span className="text-[10px] text-muted-foreground uppercase truncate max-w-[150px]">
-                    {user.company_name}
-                  </span>
-                ) : null}
+                <span className="text-[11px] text-muted-foreground tracking-wide">
+                  DECLARAÇÃO DE CONTEÚDO
+                </span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

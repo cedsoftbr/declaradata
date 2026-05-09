@@ -41,7 +41,14 @@
       "Bash(.venv/bin/python manage.py shell -c ' *)",
       "Bash(.venv/bin/ruff check *)",
       "Bash(~/.local/bin/ruff check *)",
-      "Bash(python3 -m ruff check apps/users/views.py apps/companies/views.py apps/persons/views.py apps/products/views.py)"
+      "Bash(python3 -m ruff check apps/users/views.py apps/companies/views.py apps/persons/views.py apps/products/views.py)",
+      "Bash(python3 -c \"from PIL import Image; print\\('ok'\\)\")",
+      "Bash(convert --version)",
+      "Bash(convert -size 32x32 'xc:#0a0a0a' -fill none -stroke white -strokewidth 1.5 -draw 'roundrectangle 0,0 31,31 6,6' /tmp/base.png)",
+      "Bash(python3)",
+      "Bash(cp /tmp/email_set_password.html /home/cesar/Projetos/CEDSoft/declaradata/email_set_password.html)",
+      "Bash(cp /tmp/email_reset_password.html /home/cesar/Projetos/CEDSoft/declaradata/email_reset_password.html)",
+      "Bash(cp /tmp/email_2fa.html /home/cesar/Projetos/CEDSoft/declaradata/email_2fa.html)"
     ]
   }
 }

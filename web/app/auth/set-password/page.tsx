@@ -1,6 +1,6 @@
 'use client'
 
-import { Loader2 } from 'lucide-react'
+import { FileText, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
@@ -13,8 +13,6 @@ import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-
-const APP_NAME = process.env.NEXT_PUBLIC_NAME ?? 'Declaradata'
 
 function DefinirSenhaForm() {
   const router = useRouter()
@@ -105,9 +103,17 @@ function DefinirSenhaForm() {
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold uppercase tracking-tight">
-              {APP_NAME}
-            </span>
+            <div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-foreground text-background shrink-0">
+              <FileText className="size-5" />
+            </div>
+            <div className="flex flex-col gap-0.5 leading-none">
+              <span className="text-base font-bold uppercase tracking-tight">
+                INTEGRADATA
+              </span>
+              <span className="text-[11px] text-muted-foreground tracking-wide">
+                DECLARAÇÃO DE CONTEÚDO
+              </span>
+            </div>
           </div>
         </div>
 

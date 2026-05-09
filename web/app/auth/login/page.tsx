@@ -1,5 +1,6 @@
 'use client'
 
+import { FileText } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { LoginForm } from '@/components/login-form'
@@ -8,7 +9,6 @@ const LOGIN_IMAGES = ['/personal-1.png', '/personal-2.png', '/personal-3.png']
 const LOGIN_IMAGE_STORAGE_KEY = 'login-image-index'
 
 export default function LoginPage() {
-  const APP_NAME = process.env.NEXT_PUBLIC_NAME ?? 'Declaradata'
   const [loginImage, setLoginImage] = useState(LOGIN_IMAGES[0])
 
   useEffect(() => {
@@ -29,9 +29,17 @@ export default function LoginPage() {
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold uppercase tracking-tight">
-              {APP_NAME}
-            </span>
+            <div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-foreground text-background shrink-0">
+              <FileText className="size-5" />
+            </div>
+            <div className="flex flex-col gap-0.5 leading-none">
+              <span className="text-base font-bold uppercase tracking-tight">
+                INTEGRADATA
+              </span>
+              <span className="text-[11px] text-muted-foreground tracking-wide">
+                DECLARAÇÃO DE CONTEÚDO
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex flex-1 items-center justify-center">
