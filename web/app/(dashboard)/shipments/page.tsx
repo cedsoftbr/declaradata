@@ -331,16 +331,28 @@ export default function ShipmentsPage() {
       if (!task_id) throw new Error('Tarefa de impressão não retornou ID.')
 
       setPrinting(false)
+      toast.info(
+        'DACE enviado para geração. Você será notificado quando estiver pronto.',
+        {
+          position: 'top-center',
+          duration: 4000,
+        }
+      )
 
       await pollBulkPdfStatus(task_id)
 
       addNotification({
-        title: 'PDF Disponível',
+        title: 'DACE Disponível',
         message: `PDF com ${selectedPrintable.length} documento(s) gerado com sucesso.`,
         action: {
           label: 'Baixar Agora',
           onClick: () => downloadBulkPdf(task_id),
         },
+      })
+
+      toast.success('DACE gerado com sucesso!', {
+        position: 'top-center',
+        duration: 4000,
       })
     } catch (err) {
       const msg =
@@ -555,7 +567,7 @@ export default function ShipmentsPage() {
                   ) : (
                     <Printer className="size-4 mr-2" />
                   )}
-                  Baixar PDF ({printableCount})
+                  Imprimir DACE ({printableCount})
                 </Button>
               )}
               {emittableCount > 0 && (
