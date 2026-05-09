@@ -51,7 +51,7 @@ export default function LoginPage() {
       <div className="relative hidden bg-muted lg:block overflow-hidden">
         <Image
           src={loginImage}
-          alt="Declaradata"
+          alt="Integradata"
           fill
           sizes="50vw"
           className="object-cover"

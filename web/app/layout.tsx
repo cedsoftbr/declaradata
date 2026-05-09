@@ -19,8 +19,11 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Declaradata',
-  description: 'Painel de controle Declaradata',
+  title: {
+    default: 'Integradata | Declaração de Conteúdo',
+    template: '%s | Integradata - Declaração de Conteúdo',
+  },
+  description: 'Painel de controle Integradata',
 }
 
 export default function RootLayout({

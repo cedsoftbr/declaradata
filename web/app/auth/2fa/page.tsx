@@ -156,7 +156,7 @@ export default function TwoFAPage() {
       <div className="relative hidden bg-muted lg:block overflow-hidden">
         <Image
           src="/personal-1.png"
-          alt="Declaradata"
+          alt="Integradata"
           fill
           sizes="50vw"
           className="object-cover"
