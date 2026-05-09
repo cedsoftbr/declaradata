@@ -146,7 +146,9 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserManageSerializer
     permission_classes: ClassVar[list] = [IsSuperAdminOrCompanyManager]
     filter_backends: ClassVar[list] = [
-        DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter,
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
     ]
     filterset_fields: ClassVar[list] = [
         'is_active',
@@ -157,7 +159,12 @@ class UserViewSet(viewsets.ModelViewSet):
     ]
     search_fields: ClassVar[list[str]] = ['email', 'first_name', 'last_name']
     ordering_fields: ClassVar[list] = [
-        'email', 'first_name', 'last_name', 'profile', 'is_active', 'last_login',
+        'email',
+        'first_name',
+        'last_name',
+        'profile',
+        'is_active',
+        'last_login',
     ]
     ordering: ClassVar[list] = ['email']
 

@@ -180,7 +180,11 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     filter_backends: ClassVar[list] = [DjangoFilterBackend, OrderingFilter]
     filterset_class = ShipmentFilter
     ordering_fields: ClassVar[list] = [
-        'number', 'dh_emi', 'emitter__name', 'recipient__name', 'status',
+        'number',
+        'dh_emi',
+        'emitter__name',
+        'recipient__name',
+        'status',
     ]
     ordering: ClassVar[list] = ['-created_at']
 

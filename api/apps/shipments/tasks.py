@@ -381,7 +381,8 @@ def bulk_pdf_task(
     if company_id:
         qs_filter['company_id'] = company_id
     shipments = (
-        Shipment.objects.filter(**qs_filter)
+        Shipment.objects
+        .filter(**qs_filter)
         .select_related('company')
         .order_by('number')
     )

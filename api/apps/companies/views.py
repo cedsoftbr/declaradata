@@ -27,7 +27,9 @@ def _check_company_access(user, company):
 class CompanyViewSet(viewsets.ModelViewSet):
     serializer_class = CompanySerializer
     filter_backends: ClassVar[list] = [
-        DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter,
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
     ]
     filterset_fields: ClassVar[list] = ['is_active']
     search_fields: ClassVar[list[str]] = ['name', 'cnpj']
