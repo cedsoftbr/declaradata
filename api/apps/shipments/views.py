@@ -19,6 +19,7 @@ from rest_framework.exceptions import (
     NotAuthenticated,
     PermissionDenied,
 )
+from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -171,8 +172,12 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     """
 
     module_name = 'dce'
-    filter_backends: ClassVar[list] = [DjangoFilterBackend]
+    filter_backends: ClassVar[list] = [DjangoFilterBackend, OrderingFilter]
     filterset_class = ShipmentFilter
+    ordering_fields: ClassVar[list] = [
+        'number', 'dh_emi', 'emitter__name', 'recipient__name', 'status',
+    ]
+    ordering: ClassVar[list] = ['-created_at']
 
     def get_permissions(self):
         if not self.request:
@@ -219,7 +224,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             return Shipment.objects.none()
 
         if hasattr(user, 'is_superadmin') and user.is_superadmin:
-            return qs.order_by('-created_at')
+            return qs
         qs = qs.filter(company_id=user.company_id)
         if getattr(user, 'profile', None) != 'admin':
             allowed_emitente_ids = list(
@@ -229,7 +234,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             )
             if allowed_emitente_ids:
                 qs = qs.filter(emitter_id__in=allowed_emitente_ids)
-        return qs.order_by('-created_at')
+        return qs
 
     def perform_create(self, serializer):
         user = self.request.user

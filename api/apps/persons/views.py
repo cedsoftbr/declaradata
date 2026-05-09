@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
-from rest_framework import status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser
@@ -102,13 +102,15 @@ class PersonViewSet(viewsets.ModelViewSet):
     serializer_class = PersonSerializer
     permission_classes: ClassVar[list] = [IsAuthenticated, HasModulePermission]
     module_name = 'persons'
-    filter_backends: ClassVar[list] = [DjangoFilterBackend]
+    filter_backends: ClassVar[list] = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields: ClassVar[list[str]] = [
         'is_carrier',
         'is_active',
         'company',
         'is_emitente',
     ]
+    ordering_fields: ClassVar[list] = ['name', 'document', 'is_active']
+    ordering: ClassVar[list] = ['name']
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
@@ -152,7 +154,7 @@ class PersonViewSet(viewsets.ModelViewSet):
                     Q(certificate__isnull=True) | Q(certificate__cert_pfx__isnull=True)
                 )
 
-        return qs.order_by('name')
+        return qs
 
     def _audit(
         self, action: str, person: Person, changed_fields: dict | None = None

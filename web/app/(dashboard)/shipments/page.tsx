@@ -2,6 +2,9 @@
 
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   FileSpreadsheet,
   FileStack,
   Loader2,
@@ -96,6 +99,14 @@ export default function ShipmentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [emitterFilter, setEmitterFilter] = useState<string>('')
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
+  const [ordering, setOrdering] = useState<string>('-created_at')
+
+  const handleSort = (field: string) => {
+    setOrdering(prev =>
+      prev === field ? `-${field}` : prev === `-${field}` ? '' : field
+    )
+    setPage(1)
+  }
 
   const { data: usersData } = useQuery({
     queryKey: ['users-list-minimal'],
@@ -159,6 +170,7 @@ export default function ShipmentsPage() {
       emitterFilter,
       dateRange?.from,
       dateRange?.to,
+      ordering,
     ],
     queryFn: async () => {
       const qs = new URLSearchParams()
@@ -168,6 +180,7 @@ export default function ShipmentsPage() {
       if (userId) qs.set('user', userId)
       if (statusFilter) qs.set('status', statusFilter)
       if (emitterFilter) qs.set('emitter', emitterFilter)
+      if (ordering) qs.set('ordering', ordering)
       if (dateRange?.from) qs.set('created_at_after', dateRange.from.toISOString())
       if (dateRange?.to) {
         const b = new Date(dateRange.to)
@@ -639,24 +652,40 @@ export default function ShipmentsPage() {
                   onCheckedChange={toggleSelectAll}
                 />
               </TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground py-4">
-                Número
-              </TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground py-4">
-                Data
-              </TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground py-4">
-                Emitente
-              </TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground py-4">
-                Remetente
-              </TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground py-4">
-                Destinatário
-              </TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-wider text-muted-foreground py-4">
-                Status
-              </TableHead>
+              {(
+                [
+                  ['number', 'Número'],
+                  ['dh_emi', 'Data'],
+                  ['emitter__name', 'Emitente'],
+                  [null, 'Remetente'],
+                  ['recipient__name', 'Destinatário'],
+                  ['status', 'Status'],
+                ] as [string | null, string][]
+              ).map(([field, label]) => (
+                <TableHead
+                  key={label}
+                  className="font-bold text-xs uppercase tracking-wider text-muted-foreground py-4"
+                >
+                  {field ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSort(field)}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      {label}
+                      {ordering === field ? (
+                        <ArrowUp className="size-3" />
+                      ) : ordering === `-${field}` ? (
+                        <ArrowDown className="size-3" />
+                      ) : (
+                        <ArrowUpDown className="size-3 opacity-40" />
+                      )}
+                    </button>
+                  ) : (
+                    label
+                  )}
+                </TableHead>
+              ))}
               <TableHead className="w-[100px] py-4" />
             </TableRow>
           </TableHeader>

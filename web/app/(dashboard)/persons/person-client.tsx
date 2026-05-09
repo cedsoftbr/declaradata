@@ -2,6 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query'
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   FileSpreadsheet,
   FilterX,
   Loader2,
@@ -79,6 +82,14 @@ export function PersonsClient() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [ordering, setOrdering] = useState<string>('name')
+
+  const handleSort = (field: string) => {
+    setOrdering(prev =>
+      prev === field ? `-${field}` : prev === `-${field}` ? '' : field
+    )
+    setPage(1)
+  }
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleSearchChange = (value: string) => {
@@ -97,12 +108,13 @@ export function PersonsClient() {
     error,
     refetch: refetchPersons,
   } = useQuery({
-    queryKey: ['persons', debouncedSearch, activeFilter, page, pageSize],
+    queryKey: ['persons', debouncedSearch, activeFilter, page, pageSize, ordering],
     queryFn: async () => {
       const qs = new URLSearchParams()
       if (debouncedSearch) qs.set('search', debouncedSearch)
       if (activeFilter === 'active') qs.set('is_active', 'true')
       if (activeFilter === 'inactive') qs.set('is_active', 'false')
+      if (ordering) qs.set('ordering', ordering)
       if (page > 1) qs.set('page', String(page))
       qs.set('page_size', String(pageSize))
       const res = await call(`/api/persons?${qs}`)
@@ -217,13 +229,39 @@ export function PersonsClient() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
-                  <TableHead className="font-bold py-4">Documento</TableHead>
-                  <TableHead className="font-bold py-4">Nome / Razão Social</TableHead>
-                  <TableHead className="font-bold py-4">Tipo</TableHead>
-                  <TableHead className="font-bold py-4">Cidade</TableHead>
-                  <TableHead className="w-[110px] font-bold py-4 text-right">
-                    Status
-                  </TableHead>
+                  {(
+                    [
+                      ['document', 'Documento'],
+                      ['name', 'Nome / Razão Social'],
+                      [null, 'Tipo'],
+                      [null, 'Cidade'],
+                      ['is_active', 'Status'],
+                    ] as [string | null, string][]
+                  ).map(([field, label]) => (
+                    <TableHead
+                      key={label}
+                      className={`font-bold py-4${field === 'is_active' ? ' w-[110px] text-right' : ''}`}
+                    >
+                      {field ? (
+                        <button
+                          type="button"
+                          onClick={() => handleSort(field)}
+                          className="flex items-center gap-1 hover:text-foreground transition-colors"
+                        >
+                          {label}
+                          {ordering === field ? (
+                            <ArrowUp className="size-3" />
+                          ) : ordering === `-${field}` ? (
+                            <ArrowDown className="size-3" />
+                          ) : (
+                            <ArrowUpDown className="size-3 opacity-40" />
+                          )}
+                        </button>
+                      ) : (
+                        label
+                      )}
+                    </TableHead>
+                  ))}
                   <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>

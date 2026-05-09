@@ -26,16 +26,20 @@ def _check_company_access(user, company):
 
 class CompanyViewSet(viewsets.ModelViewSet):
     serializer_class = CompanySerializer
-    filter_backends: ClassVar[list] = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends: ClassVar[list] = [
+        DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter,
+    ]
     filterset_fields: ClassVar[list] = ['is_active']
     search_fields: ClassVar[list[str]] = ['name', 'cnpj']
+    ordering_fields: ClassVar[list] = ['name', 'cnpj', 'is_active']
+    ordering: ClassVar[list] = ['name']
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return Company.objects.none()
 
         user = self.request.user
-        qs = Company.objects.all().order_by('name')
+        qs = Company.objects.all()
         if user.is_authenticated and user.is_superadmin:
             return qs
         return qs.filter(id=user.company_id if user.is_authenticated else None)

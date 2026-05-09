@@ -145,7 +145,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
     serializer_class = UserManageSerializer
     permission_classes: ClassVar[list] = [IsSuperAdminOrCompanyManager]
-    filter_backends: ClassVar[list] = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends: ClassVar[list] = [
+        DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter,
+    ]
     filterset_fields: ClassVar[list] = [
         'is_active',
         'profile',
@@ -154,6 +156,10 @@ class UserViewSet(viewsets.ModelViewSet):
         'is_superuser',
     ]
     search_fields: ClassVar[list[str]] = ['email', 'first_name', 'last_name']
+    ordering_fields: ClassVar[list] = [
+        'email', 'first_name', 'last_name', 'profile', 'is_active', 'last_login',
+    ]
+    ordering: ClassVar[list] = ['email']
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
@@ -164,16 +170,13 @@ class UserViewSet(viewsets.ModelViewSet):
             'allowed_emitentes'
         )
 
-        # Superadmin (is_superuser=True ou is_staff=True) vê tudo
         if user.is_superadmin:
-            return qs.order_by('email')
+            return qs
 
-        # Gestor de empresa só vê usuários da sua própria empresa.
-        # Se por algum erro o gestor não tiver empresa vinculada, ele não vê ninguém.
         if user.company_id is None:
             return User.objects.none()
 
-        return qs.filter(company_id=user.company_id).order_by('email')
+        return qs.filter(company_id=user.company_id)
 
     def perform_create(self, serializer):
         requesting_user = self.request.user

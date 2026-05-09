@@ -1,7 +1,17 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { Building2, FilterX, Loader2, Pencil, Plus, Search } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Building2,
+  FilterX,
+  Loader2,
+  Pencil,
+  Plus,
+  Search,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -38,6 +48,15 @@ export default function CompaniesPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
+  const [ordering, setOrdering] = useState<string>('name')
+
+  const handleSort = (field: string) => {
+    setOrdering(prev =>
+      prev === field ? `-${field}` : prev === `-${field}` ? '' : field
+    )
+    setPage(1)
+  }
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleSearchChange = (value: string) => {
@@ -53,12 +72,13 @@ export default function CompaniesPage() {
   const isSuperAdmin = me?.profile === 'superadmin'
 
   const { data, isLoading, isFetching, error } = useQuery({
-    queryKey: ['companies', debouncedSearch, activeFilter, page, pageSize],
+    queryKey: ['companies', debouncedSearch, activeFilter, page, pageSize, ordering],
     queryFn: async () => {
       const qs = new URLSearchParams()
       if (debouncedSearch) qs.set('search', debouncedSearch)
       if (activeFilter === 'active') qs.set('is_active', 'true')
       if (activeFilter === 'inactive') qs.set('is_active', 'false')
+      if (ordering) qs.set('ordering', ordering)
       if (page > 1) qs.set('page', String(page))
       qs.set('page_size', String(pageSize))
       const res = await call(`/api/companies?${qs}`)
@@ -169,9 +189,30 @@ export default function CompaniesPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
-                <TableHead className="font-bold py-4">Nome / Razão Social</TableHead>
-                <TableHead className="font-bold py-4">Documento</TableHead>
-                <TableHead className="font-bold py-4">Status</TableHead>
+                {(
+                  [
+                    ['name', 'Nome / Razão Social'],
+                    ['cnpj', 'Documento'],
+                    ['is_active', 'Status'],
+                  ] as [string, string][]
+                ).map(([field, label]) => (
+                  <TableHead key={field} className="font-bold py-4">
+                    <button
+                      type="button"
+                      onClick={() => handleSort(field)}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      {label}
+                      {ordering === field ? (
+                        <ArrowUp className="size-3" />
+                      ) : ordering === `-${field}` ? (
+                        <ArrowDown className="size-3" />
+                      ) : (
+                        <ArrowUpDown className="size-3 opacity-40" />
+                      )}
+                    </button>
+                  </TableHead>
+                ))}
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>

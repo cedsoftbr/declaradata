@@ -1,7 +1,18 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { FilterX, Loader2, Pencil, Plus, RefreshCw, Search, Users } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  FilterX,
+  Loader2,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Users,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -124,6 +135,14 @@ export default function UsersPage() {
   >('all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
+  const [ordering, setOrdering] = useState<string>('email')
+
+  const handleSort = (field: string) => {
+    setOrdering(prev =>
+      prev === field ? `-${field}` : prev === `-${field}` ? '' : field
+    )
+    setPage(1)
+  }
 
   const isSuperAdmin = me?.profile === 'superadmin'
   const canAccessUsers =
@@ -165,6 +184,7 @@ export default function UsersPage() {
 
     setTypeFilters(qs)
 
+    if (ordering) qs.set('ordering', ordering)
     if (page > 1) qs.set('page', String(page))
     qs.set('page_size', String(pageSize))
     return qs.toString()
@@ -179,6 +199,7 @@ export default function UsersPage() {
       typeFilter,
       page,
       pageSize,
+      ordering,
     ],
     queryFn: async () => {
       const queryString = buildUserQueryString()
@@ -329,16 +350,40 @@ export default function UsersPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
-                <TableHead className="font-bold py-4">Usuário</TableHead>
-                <TableHead className="font-bold py-4">E-mail</TableHead>
-                {isSuperAdmin && (
-                  <TableHead className="font-bold py-4">Empresa</TableHead>
-                )}
-                <TableHead className="font-bold py-4">Perfil</TableHead>
-                <TableHead className="font-bold py-4 text-right">Status</TableHead>
-                <TableHead className="font-bold py-4 text-right">
-                  Último acesso
-                </TableHead>
+                {(
+                  [
+                    ['first_name', 'Usuário'],
+                    ['email', 'E-mail'],
+                    isSuperAdmin ? [null, 'Empresa'] : null,
+                    ['profile', 'Perfil'],
+                    ['is_active', 'Status'],
+                    ['last_login', 'Último acesso'],
+                  ].filter(Boolean) as [string | null, string][]
+                ).map(([field, label]) => (
+                  <TableHead
+                    key={label}
+                    className={`font-bold py-4${field === 'is_active' || field === 'last_login' ? ' text-right' : ''}`}
+                  >
+                    {field ? (
+                      <button
+                        type="button"
+                        onClick={() => handleSort(field)}
+                        className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      >
+                        {label}
+                        {ordering === field ? (
+                          <ArrowUp className="size-3" />
+                        ) : ordering === `-${field}` ? (
+                          <ArrowDown className="size-3" />
+                        ) : (
+                          <ArrowUpDown className="size-3 opacity-40" />
+                        )}
+                      </button>
+                    ) : (
+                      label
+                    )}
+                  </TableHead>
+                ))}
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>

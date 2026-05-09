@@ -3,7 +3,7 @@ from typing import ClassVar
 from django.db import transaction
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -87,8 +87,10 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes: ClassVar[list] = [IsAuthenticated, HasModulePermission]
     module_name = 'products'
-    filter_backends: ClassVar[list] = [DjangoFilterBackend]
+    filter_backends: ClassVar[list] = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields: ClassVar[list[str]] = ['ncm', 'company']
+    ordering_fields: ClassVar[list] = ['descricao', 'ncm']
+    ordering: ClassVar[list] = ['descricao']
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
@@ -107,7 +109,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                 Q(descricao__unaccent__icontains=search) | Q(ncm__icontains=search)
             )
 
-        return qs.order_by('descricao')
+        return qs
 
     def perform_create(self, serializer):
         if not self.request.user.is_superadmin:

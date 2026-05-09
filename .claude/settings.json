@@ -38,7 +38,10 @@
       "Bash(.venv/bin/pytest apps/users/tests/test_api.py::UserAPITests::test_superadmin_user_crud -x -s)",
       "Bash(.venv/bin/pytest -x -q)",
       "Bash(.venv/bin/pytest apps/shipments/tests/test_multitenant.py::SuperAdminAcessoTotalTests::test_superadmin_acessa_person_de_qualquer_empresa -x -s)",
-      "Bash(.venv/bin/python manage.py shell -c ' *)"
+      "Bash(.venv/bin/python manage.py shell -c ' *)",
+      "Bash(.venv/bin/ruff check *)",
+      "Bash(~/.local/bin/ruff check *)",
+      "Bash(python3 -m ruff check apps/users/views.py apps/companies/views.py apps/persons/views.py apps/products/views.py)"
     ]
   }
 }
