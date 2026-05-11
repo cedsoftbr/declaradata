@@ -48,7 +48,9 @@
       "Bash(python3)",
       "Bash(cp /tmp/email_set_password.html /home/cesar/Projetos/CEDSoft/declaradata/email_set_password.html)",
       "Bash(cp /tmp/email_reset_password.html /home/cesar/Projetos/CEDSoft/declaradata/email_reset_password.html)",
-      "Bash(cp /tmp/email_2fa.html /home/cesar/Projetos/CEDSoft/declaradata/email_2fa.html)"
+      "Bash(cp /tmp/email_2fa.html /home/cesar/Projetos/CEDSoft/declaradata/email_2fa.html)",
+      "Bash(.venv/bin/python manage.py makemigrations shipments --name=\"unique_active_series_per_emitter\")",
+      "Bash(.venv/bin/python manage.py migrate --run-syncdb)"
     ]
   }
 }

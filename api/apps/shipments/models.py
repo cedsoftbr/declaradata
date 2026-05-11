@@ -47,9 +47,9 @@ class Series(models.Model):
         ordering: ClassVar[list] = ['ambient', 'code']
         constraints: ClassVar[list] = [
             models.UniqueConstraint(
-                fields=['emitter', 'ambient'],
+                fields=['emitter'],
                 condition=models.Q(is_active=True),
-                name='unique_active_series_per_emitter_ambient',
+                name='unique_active_series_per_emitter',
             ),
         ]
 

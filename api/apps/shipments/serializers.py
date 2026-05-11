@@ -103,6 +103,16 @@ class SeriesSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    @override
+    def update(self, instance, validated_data):
+        activating = validated_data.get('is_active', instance.is_active) and not instance.is_active
+        result = super().update(instance, validated_data)
+        if activating and instance.emitter_id:
+            Series.objects.filter(
+                emitter_id=instance.emitter_id, is_active=True
+            ).exclude(pk=instance.pk).update(is_active=False)
+        return result
+
 
 class ShipmentItemSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(read_only=False, required=False)
@@ -755,13 +765,21 @@ class ShipmentCreateSerializer(serializers.ModelSerializer):
                     serie_code = validated_data.get('serie') or (
                         emitter.preferred_series if emitter else 1
                     )
-                    series, _ = Series.objects.get_or_create(
+                    series, created = Series.objects.get_or_create(
                         company=company,
                         emitter=emitter,
                         ambient=ambient,
                         code=serie_code,
                         defaults={'last_number': 0},
                     )
+                    if created or not series.is_active:
+                        # Desativa qualquer outra série ativa do emitente antes de ativar esta
+                        Series.objects.filter(
+                            emitter=emitter, is_active=True
+                        ).exclude(pk=series.pk).update(is_active=False)
+                        if not series.is_active:
+                            series.is_active = True
+                            series.save(update_fields=['is_active', 'updated_at'])
                 validated_data['series'] = series
 
             validated_data['tp_amb'] = series.ambient
