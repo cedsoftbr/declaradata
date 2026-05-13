@@ -39,7 +39,7 @@ import {
 } from './dce-types'
 
 interface DceFormProps {
-  initialData?: ShipmentDetail
+  initialData?: Omit<ShipmentDetail, 'tp_amb'> & { tp_amb?: 1 | 2 | 3 }
   readOnly?: boolean
 }
 
