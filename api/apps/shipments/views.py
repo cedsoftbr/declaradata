@@ -318,6 +318,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                 Shipment.Status.CANCELLED,
             ],
             number__isnull=False,
+            created_at__year=now.year,
+            created_at__month=now.month,
         ).count()
 
         return Response({
@@ -483,6 +485,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             )
 
         if shipment.tp_amb == Shipment.Ambient.PRODUCAO:
+            now = timezone.now()
             used_in_production = Shipment.objects.filter(
                 company_id=shipment.company_id,
                 tp_amb=Shipment.Ambient.PRODUCAO,
@@ -492,6 +495,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                     Shipment.Status.CANCELLED,
                 ],
                 number__isnull=False,
+                created_at__year=now.year,
+                created_at__month=now.month,
             ).count()
             monthly_limit = shipment.company.monthly_dce_limit
             if used_in_production >= monthly_limit:
