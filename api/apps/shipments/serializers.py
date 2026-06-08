@@ -1,6 +1,6 @@
 from typing import ClassVar, override
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Max
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -105,7 +105,8 @@ class SeriesSerializer(serializers.ModelSerializer):
 
     @override
     def update(self, instance, validated_data):
-        activating = validated_data.get('is_active', instance.is_active) and not instance.is_active
+        new_is_active = validated_data.get('is_active', instance.is_active)
+        activating = new_is_active and not instance.is_active
         result = super().update(instance, validated_data)
         if activating and instance.emitter_id:
             Series.objects.filter(
@@ -765,15 +766,22 @@ class ShipmentCreateSerializer(serializers.ModelSerializer):
                     serie_code = validated_data.get('serie') or (
                         emitter.preferred_series if emitter else 1
                     )
-                    series, created = Series.objects.get_or_create(
-                        company=company,
-                        emitter=emitter,
-                        ambient=ambient,
-                        code=serie_code,
-                        defaults={'last_number': 0},
-                    )
-                    if created or not series.is_active:
-                        # Desativa qualquer outra série ativa do emitente antes de ativar esta
+                    try:
+                        series, created = Series.objects.get_or_create(
+                            company=company,
+                            emitter=emitter,
+                            ambient=ambient,
+                            code=serie_code,
+                            defaults={'last_number': 0},
+                        )
+                    except IntegrityError:
+                        # Race condition: outro request criou a série simultaneamente
+                        series = Series.objects.filter(
+                            emitter=emitter, is_active=True
+                        ).first()
+                        created = False
+                    if created or (series and not series.is_active):
+                        # Desativa outras séries ativas do emitente antes de ativar esta
                         Series.objects.filter(
                             emitter=emitter, is_active=True
                         ).exclude(pk=series.pk).update(is_active=False)
