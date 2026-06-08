@@ -318,6 +318,16 @@ export function PersonCertificateForm({
     prevEnvironmentRef.current = environment
 
     const hasSeries = seriesValues?.some(s => s.ambient === environment)
+
+    // Desativa todas as séries existentes antes de ativar a do novo ambiente
+    if (seriesValues) {
+      for (let i = 0; i < seriesValues.length; i++) {
+        if (seriesValues[i].is_active) {
+          update(i, { ...seriesValues[i], is_active: false })
+        }
+      }
+    }
+
     if (!hasSeries) {
       append({
         code: 1,
@@ -327,6 +337,12 @@ export function PersonCertificateForm({
         is_active: true,
         ambient: environment as 1 | 2,
       })
+    } else {
+      // Ativa a série existente do novo ambiente
+      const idx = seriesValues?.findIndex(s => s.ambient === environment) ?? -1
+      if (idx >= 0 && seriesValues) {
+        update(idx, { ...seriesValues[idx], is_active: true })
+      }
     }
 
     // Salva o ambiente no certificado existente quando o usuário muda o select
