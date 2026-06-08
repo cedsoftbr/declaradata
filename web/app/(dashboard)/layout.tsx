@@ -88,7 +88,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   if (!isAuthenticated) {
-    return null
+    return (
+      <div className="flex flex-col h-screen items-center justify-center gap-3">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground font-medium">Redirecionando...</p>
+      </div>
+    )
   }
 
   // Previne renderizar o Dashboard (/) por um milissegundo antes do redirecionamento
@@ -99,7 +104,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     !user.is_superuser &&
     !user.is_staff
   ) {
-    return null
+    return (
+      <div className="flex flex-col h-screen items-center justify-center gap-3">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground font-medium">Redirecionando...</p>
+      </div>
+    )
   }
 
   return (
