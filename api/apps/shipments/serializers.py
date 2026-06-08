@@ -767,13 +767,14 @@ class ShipmentCreateSerializer(serializers.ModelSerializer):
                         emitter.preferred_series if emitter else 1
                     )
                     try:
-                        series, created = Series.objects.get_or_create(
-                            company=company,
-                            emitter=emitter,
-                            ambient=ambient,
-                            code=serie_code,
-                            defaults={'last_number': 0},
-                        )
+                        with transaction.atomic():
+                            series, created = Series.objects.get_or_create(
+                                company=company,
+                                emitter=emitter,
+                                ambient=ambient,
+                                code=serie_code,
+                                defaults={'last_number': 0},
+                            )
                     except IntegrityError:
                         # Race condition: outro request criou a série simultaneamente
                         series = Series.objects.filter(
