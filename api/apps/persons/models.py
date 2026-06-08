@@ -26,7 +26,7 @@ class Person(models.Model):
     )
 
     # Identificação
-    name = models.CharField(max_length=255, verbose_name='razão social / nome')
+    name = models.CharField(max_length=60, verbose_name='razão social / nome')
     document = models.CharField(max_length=18, verbose_name='CPF / CNPJ')
 
     is_carrier = models.BooleanField(default=False, verbose_name='é transportadora')

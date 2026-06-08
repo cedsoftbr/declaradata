@@ -103,6 +103,7 @@ export function PersonAutocomplete({
           disabled={disabled}
           aria-invalid={ariaInvalid}
           value={value}
+          maxLength={60}
           onChange={e => {
             onChange(e.target.value)
             setIsOpen(true)

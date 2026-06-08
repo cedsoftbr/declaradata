@@ -146,13 +146,13 @@ export function DceForm({ initialData, readOnly = false }: DceFormProps) {
   const ambientDisplay: 1 | 2 | 3 = useMemo(() => {
     if (initialData?.tp_amb) return initialData.tp_amb
     if (emitterCertStatus?.has_certificate) {
-      return (company?.environment ?? 2) as 1 | 2 | 3
+      return (company?.current_ambient ?? 2) as 1 | 2 | 3
     }
     return allowSimulated ? 3 : 2
   }, [
     initialData?.tp_amb,
     emitterCertStatus?.has_certificate,
-    company?.environment,
+    company?.current_ambient,
     allowSimulated,
   ])
 
