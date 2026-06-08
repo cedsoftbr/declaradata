@@ -118,11 +118,22 @@ export function AuthProvider({
           // Sessão ativa na mesma janela — usa o token guardado.
           // Se estiver expirado, o useApi renova no próximo 401.
           setAccessToken(stored)
+        } else {
+          // sessionStorage vazio (ex: browser reaberto) — tenta recuperar via cookie.
+          // Se o cookie expirou ou não existe, o refresh retorna null e o middleware
+          // redireciona para login na próxima navegação.
+          try {
+            const res = await fetch('/api/auth/refresh', { method: 'POST' })
+            if (res.ok) {
+              const { access } = (await res.json()) as { access: string }
+              setAccessToken(access)
+            }
+          } catch {
+            // Erro de rede — segue sem token, middleware cuida do redirect
+          }
         }
       }
 
-      // sessionStorage vazio = browser foi fechado/reaberto.
-      // Não faz auto-refresh; exige novo login explícito.
       setIsInitializing(false)
     }
     initAuth()
