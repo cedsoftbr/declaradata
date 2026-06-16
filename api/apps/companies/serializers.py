@@ -1,8 +1,11 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from apps.billing.models import Plan
 from apps.billing.serializers import PlanSerializer
 from apps.locations.serializers import CitySerializer
+from apps.persons.models import Person
+from apps.shipments.models import Series
 
 from .models import Company
 
@@ -62,5 +65,36 @@ class CompanyEnvironmentSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         environment = validated_data.get('environment')
         if environment is not None:
-            instance.current_ambient = environment
-        return super().update(instance, validated_data)
+            validated_data['current_ambient'] = environment
+
+        new_ambient = validated_data.get('current_ambient', instance.current_ambient)
+        ambient_changed = new_ambient != instance.current_ambient
+
+        with transaction.atomic():
+            result = super().update(instance, validated_data)
+            if ambient_changed:
+                self._sync_series_for_company(instance, new_ambient)
+        return result
+
+    @staticmethod
+    def _sync_series_for_company(company, ambient):
+        emitters = Person.objects.filter(company=company, is_emitente=True)
+        for emitter in emitters:
+            active = Series.objects.filter(emitter=emitter, is_active=True).first()
+            if active and active.ambient == ambient:
+                continue
+            target = Series.objects.filter(emitter=emitter, ambient=ambient).first()
+            if not target:
+                target = Series.objects.create(
+                    company=company,
+                    emitter=emitter,
+                    ambient=ambient,
+                    code=emitter.preferred_series or 1,
+                    last_number=0,
+                )
+            Series.objects.filter(emitter=emitter, is_active=True).exclude(
+                pk=target.pk
+            ).update(is_active=False)
+            if not target.is_active:
+                target.is_active = True
+                target.save(update_fields=['is_active', 'updated_at'])

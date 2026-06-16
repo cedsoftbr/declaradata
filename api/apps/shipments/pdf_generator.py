@@ -172,14 +172,17 @@ def generate_dce_pdf(shipment):  # noqa: PLR0914
     emitente_snapshot = getattr(shipment, 'emit_snapshot', None)
     marketplace_snapshot = getattr(shipment, 'marketplace_snapshot', None)
     carrier_snapshot = getattr(shipment, 'carrier_snapshot', None)
-    fiscal_snapshot = carrier_snapshot or marketplace_snapshot or emitente_snapshot
-    fiscal_label = (
-        'Transportadora'
-        if carrier_snapshot
-        else 'Marketplace'
-        if marketplace_snapshot
-        else 'Emitente'
-    )
+
+    tp_emit = _safe_int(getattr(shipment, 'tp_emit', Shipment.EmitType.PROPRIO), 2)
+    if tp_emit == Shipment.EmitType.MARKETPLACE:
+        fiscal_snapshot = marketplace_snapshot or emitente_snapshot
+        fiscal_label = 'Marketplace'
+    elif tp_emit == Shipment.EmitType.TRANSPORTADORA:
+        fiscal_snapshot = carrier_snapshot or emitente_snapshot
+        fiscal_label = 'Transportadora'
+    else:
+        fiscal_snapshot = emitente_snapshot
+        fiscal_label = 'Emitente'
     tp_amb = _safe_int(getattr(shipment, 'tp_amb', 3), 3)
     tp_emis = _safe_int(getattr(shipment, 'tp_emis', 1), 1)
     is_contingency = tp_emis == TP_EMIS_CONTINGENCY
