@@ -570,7 +570,12 @@ export function PersonForm({ initialData }: Props) {
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
               Nome / Razão Social *
             </Label>
-            <Input {...register('name')} aria-invalid={!!errors.name} className={inp} maxLength={60} />
+            <Input
+              {...register('name')}
+              aria-invalid={!!errors.name}
+              className={inp}
+              maxLength={60}
+            />
           </div>
 
           <div className="w-full md:w-[220px] space-y-1.5">

@@ -107,6 +107,41 @@ function EmissionParameters({
   )
 }
 
+const AMBIENT_LABEL: Record<1 | 2 | 3, string> = {
+  1: 'Produção',
+  2: 'Homologação',
+  3: 'Simulado',
+}
+
+function ActiveAmbientBadge({
+  seriesValues,
+}: {
+  seriesValues: PersonFormData['series'] | undefined
+}) {
+  const active = seriesValues?.find(s => s.is_active)
+  if (!active) return null
+
+  const label = AMBIENT_LABEL[active.ambient as 1 | 2 | 3]
+
+  return (
+    <div className="flex items-center gap-2 -mt-2">
+      <Badge
+        variant="outline"
+        className={cn(
+          'uppercase text-[10px] font-bold py-1 px-3 rounded-full border-transparent',
+          active.ambient === 1
+            ? 'bg-green-500/10 text-green-600'
+            : active.ambient === 2
+              ? 'bg-orange-500/10 text-orange-600'
+              : 'bg-muted text-muted-foreground'
+        )}
+      >
+        Emitindo em: {label}
+      </Badge>
+    </div>
+  )
+}
+
 function SeriesRow({
   index,
   control,
@@ -308,6 +343,7 @@ export function PersonCertificateForm({
 
   const prevEnvironmentRef = useRef<number | undefined>(undefined)
   // biome-ignore lint/correctness/useExhaustiveDependencies: call/personId/status são estáveis; dependências intencionalmente omitidas
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sincroniza série ativa ao trocar ambiente
   useEffect(() => {
     if (environment === 3) {
       prevEnvironmentRef.current = environment
@@ -530,6 +566,8 @@ export function PersonCertificateForm({
         )}
 
         <EmissionParameters control={control} allowSimulated={allowSimulated} />
+
+        <ActiveAmbientBadge seriesValues={seriesValues} />
 
         <div className="pt-4 border-t space-y-4">
           <div className="flex items-center justify-between">

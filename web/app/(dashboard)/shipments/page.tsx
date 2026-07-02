@@ -144,7 +144,9 @@ export default function ShipmentsPage() {
       return res.json() as Promise<{ count: number; limit: number; period: string }>
     },
     enabled: !!token,
+    staleTime: 25000,
     refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   })
   const isUsageLimitReached = (usageData?.count ?? 0) >= (usageData?.limit ?? Infinity)
   const usageRatio =

@@ -15,7 +15,9 @@ export function UsageCard() {
       if (!res.ok) return null
       return res.json() as Promise<{ count: number; limit: number; period: string }>
     },
+    staleTime: 25000,
     refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   })
 
   if (isLoading) {

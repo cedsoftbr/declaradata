@@ -26,7 +26,9 @@ export default function NovoDcePage() {
     )
   }
 
-  const initialData = source ? { ...source, id: '', number: null, tp_amb: undefined } : undefined
+  const initialData = source
+    ? { ...source, id: '', number: null, tp_amb: undefined }
+    : undefined
 
   return <DceForm initialData={initialData} />
 }

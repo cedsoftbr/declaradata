@@ -24,7 +24,10 @@ export const seriesSchema = z
   })
 
 export const personSchema = z.object({
-  name: z.string().min(2, 'Nome / Razão Social é obrigatório').max(60, 'Máximo 60 caracteres'),
+  name: z
+    .string()
+    .min(2, 'Nome / Razão Social é obrigatório')
+    .max(60, 'Máximo 60 caracteres'),
   document: z.string().refine(isValidCpfOrCnpj, 'Documento inválido (CPF ou CNPJ)'),
   tipo: z.enum(['cliente', 'transportador']),
   is_active: z.boolean(),

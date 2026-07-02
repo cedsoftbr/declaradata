@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FileStack, Loader2, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
@@ -139,6 +139,7 @@ export function DceForm({ initialData, readOnly = false }: DceFormProps) {
     },
     enabled: !!token && !!emitterId,
     staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
   })
 
   const allowSimulated = company?.allow_simulated_environment_for_emitters ?? true
@@ -170,7 +171,9 @@ export function DceForm({ initialData, readOnly = false }: DceFormProps) {
       return res.json() as Promise<{ count: number; limit: number; period: string }>
     },
     enabled: !!token,
+    staleTime: 25000,
     refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   })
   const isUsageLimitReached = (usageData?.count ?? 0) >= (usageData?.limit ?? Infinity)
   const shouldBlockNewByLimit = !shipmentId && isUsageLimitReached
@@ -450,10 +453,16 @@ export function DceForm({ initialData, readOnly = false }: DceFormProps) {
 
   const isDirty = currentSnapshot !== initialSnapshot
 
-  const addItem = () => setItens(p => [...p, newItem()])
-  const removeItem = (idx: number) => setItens(p => p.filter((_, i) => i !== idx))
-  const updateItem = (idx: number, updates: Partial<ItemState>) =>
-    setItens(p => p.map((it, i) => (i === idx ? { ...it, ...updates } : it)))
+  const addItem = useCallback(() => setItens(p => [...p, newItem()]), [])
+  const removeItem = useCallback(
+    (idx: number) => setItens(p => p.filter((_, i) => i !== idx)),
+    []
+  )
+  const updateItem = useCallback(
+    (idx: number, updates: Partial<ItemState>) =>
+      setItens(p => p.map((it, i) => (i === idx ? { ...it, ...updates } : it))),
+    []
+  )
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: handle complex person and address creation logic
   async function saveParte(

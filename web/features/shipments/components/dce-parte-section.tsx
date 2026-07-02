@@ -67,18 +67,31 @@ export function ParteSection({
   const [loadingCities, setLoadingCities] = useState(false)
   const [lookingUpDoc, setLookingUpDoc] = useState(false)
 
+  const normalizedDocument = useMemo(
+    () => normalizeDocument(value.document),
+    [value.document]
+  )
+
+  const foundPerson = useMemo(() => {
+    if (
+      !normalizedDocument ||
+      (normalizedDocument.length !== 11 && normalizedDocument.length !== 14)
+    )
+      return null
+    return (
+      persons.find(p => normalizeDocument(p.document) === normalizedDocument) ?? null
+    )
+  }, [normalizedDocument, persons])
+
   const status = useMemo(() => {
-    const docDigits = normalizeDocument(value.document)
-    if (!docDigits || (docDigits.length !== 11 && docDigits.length !== 14)) return null
+    if (
+      !normalizedDocument ||
+      (normalizedDocument.length !== 11 && normalizedDocument.length !== 14)
+    )
+      return null
+    if (!foundPerson) return 'novo'
 
-    const found = persons.find(p => normalizeDocument(p.document) === docDigits)
-
-    if (!found) return 'novo'
-
-    // Se encontramos a pessoa, comparamos os dados para ver se houve modificação
-    const original = mapPersonToParte(found)
-
-    // Compara apenas campos visíveis e relevantes para o usuário
+    const original = mapPersonToParte(foundPerson)
     const fieldsToCompare: (keyof ParteState)[] = [
       'document',
       'name',
@@ -91,15 +104,13 @@ export function ParteSection({
       'uf',
       'city_id',
     ]
-
     const isModified = fieldsToCompare.some(field => {
       const v1 = String(value[field] || '').trim()
       const v2 = String(original[field] || '').trim()
       return v1 !== v2
     })
-
     return isModified ? 'modificado' : 'cadastrado'
-  }, [value, persons])
+  }, [normalizedDocument, foundPerson, value])
 
   const set = (field: keyof ParteState) => (val: string) =>
     onChange({ ...value, [field]: val })
@@ -142,9 +153,8 @@ export function ParteSection({
 
     setLookingUpDoc(true)
     try {
-      const found = persons.find(p => normalizeDocument(p.document) === normalized)
-      if (found) {
-        await handlePersonSelect(found)
+      if (foundPerson) {
+        await handlePersonSelect(foundPerson)
       } else {
         onChange({
           ...value,
@@ -177,7 +187,6 @@ export function ParteSection({
     onChange({ ...value, ...patch })
   }
 
-  const normalizedDocument = normalizeDocument(value.document)
   const hasDocument = normalizedDocument.length > 0
   const hasInvalidDocumentRealtime =
     hasDocument &&

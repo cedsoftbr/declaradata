@@ -111,6 +111,7 @@ export function AuthProvider({
     if (initCalledRef.current) return
     initCalledRef.current = true
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: tenta sessionStorage, depois refresh via cookie
     const initAuth = async () => {
       if (!tokenRef.current && typeof window !== 'undefined') {
         const stored = window.sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY)
