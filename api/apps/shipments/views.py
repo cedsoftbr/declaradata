@@ -212,6 +212,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             Shipment.objects
             .select_related(
                 'company',
+                'company__plan',
                 'sender',
                 'recipient',
                 'carrier',
@@ -550,7 +551,9 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                     'q_com': item.q_com,
                     'v_un_com': item.v_un_com,
                 }
-                for item in source.items.all().order_by('n_item', 'id')
+                for item in sorted(
+                    source.items.all(), key=lambda it: (it.n_item or 0, str(it.id))
+                )
             ],
         }
         serializer = ShipmentCreateSerializer(
@@ -706,9 +709,23 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                 f'Máximo de {MAX_BULK_PDF_IDS} remessas por lote.'
             )
 
-        shipments = Shipment.objects.filter(id__in=ids).order_by('number')
-
         is_superadmin = hasattr(user, 'is_superadmin') and user.is_superadmin
+        shipments = (
+            Shipment.objects
+            .filter(id__in=ids)
+            .select_related('company', 'emitter')
+            .order_by('number')
+        )
+
+        # Resolve allowed_emitentes uma única vez fora do loop
+        allowed_emitente_ids: set | None = None
+        if not is_superadmin and getattr(user, 'profile', None) != 'admin':
+            allowed_emitente_ids = set(
+                user.allowed_emitentes
+                .filter(is_emitente=True)
+                .values_list('id', flat=True)
+            )
+
         ShipmentExportLog.objects.create(
             company=None if is_superadmin else getattr(user, 'company', None),
             actor=user,
@@ -723,7 +740,9 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         writer = PdfWriter()
         storage = R2Storage()
         for shipment in shipments:
-            _check_shipment_access(user, shipment)
+            _check_shipment_access(
+                user, shipment, allowed_emitente_ids=allowed_emitente_ids
+            )
             if (
                 shipment.status == Shipment.Status.DRAFT
                 and shipment.tp_amb != Shipment.Ambient.SIMULADO
@@ -868,7 +887,7 @@ class ShipmentExportLogViewSet(viewsets.ReadOnlyModelViewSet):
         return qs.filter(company=user.company)
 
 
-def _check_shipment_access(user, shipment):
+def _check_shipment_access(user, shipment, *, allowed_emitente_ids: set | None = None):
     if not user.is_authenticated:
         raise NotAuthenticated()
 
@@ -876,8 +895,11 @@ def _check_shipment_access(user, shipment):
     if not is_superadmin and shipment.company_id != user.company_id:
         raise PermissionDenied('Você não tem acesso a este documento.')
     if not is_superadmin and getattr(user, 'profile', None) != 'admin':
-        allowed_emitente_ids = set(
-            user.allowed_emitentes.filter(is_emitente=True).values_list('id', flat=True)
-        )
+        if allowed_emitente_ids is None:
+            allowed_emitente_ids = set(
+                user.allowed_emitentes
+                .filter(is_emitente=True)
+                .values_list('id', flat=True)
+            )
         if allowed_emitente_ids and shipment.emitter_id not in allowed_emitente_ids:
             raise PermissionDenied('Você não tem acesso a este documento.')

@@ -52,6 +52,8 @@ class Person(models.Model):
         unique_together = ('company', 'document')
         indexes: ClassVar[list] = [
             models.Index(fields=['company', 'is_active']),
+            models.Index(fields=['company', 'is_emitente']),
+            models.Index(fields=['company', 'is_carrier']),
         ]
 
     @property
