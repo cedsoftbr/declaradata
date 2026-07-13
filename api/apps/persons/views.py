@@ -170,6 +170,29 @@ class PersonViewSet(viewsets.ModelViewSet):
             ip_address=get_client_ip(self.request),
         )
 
+    def create(self, request, *args, **kwargs):
+        # Upsert por documento: se já existe na empresa, atualiza em vez de rejeitar.
+        # Necessário quando o usuário digita o documento manualmente no DC-e sem
+        # selecionar da lista — o frontend não tem o person_id e faz POST.
+        company = getattr(request.user, 'company', None)
+        document = request.data.get('document', '')
+        digits = ''.join(filter(str.isdigit, document)) if document else ''
+        if company and digits:
+            existing = (
+                Person.objects
+                .filter(company=company)
+                .filter(Q(document=document) | Q(document=digits))
+                .first()
+            )
+            if existing:
+                serializer = self.get_serializer(
+                    existing, data=request.data, partial=True
+                )
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        return super().create(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         if not self.request.user.is_superadmin:
             instance = serializer.save(company=self.request.user.company)
