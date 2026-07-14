@@ -1,3 +1,4 @@
+from decimal import Decimal
 from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -90,6 +91,28 @@ class ProductTenantTests(APITestCase):
         assert response.status_code == status.HTTP_200_OK
         self.product1.refresh_from_db()
         assert self.product1.descricao == 'Updated Product'
+
+    def test_create_product_with_unit_value(self):
+        self.client.force_authenticate(user=self.user1)
+        url = reverse('product-list')
+        data = {
+            'descricao': 'Produto com preço',
+            'ncm': '22222222',
+            'unit_value': '19.90',
+        }
+        response = self.client.post(url, data)
+        assert response.status_code == status.HTTP_201_CREATED
+        product = Product.objects.get(descricao='Produto com preço')
+        assert product.unit_value == Decimal('19.9000')
+
+    def test_create_product_without_unit_value(self):
+        self.client.force_authenticate(user=self.user1)
+        url = reverse('product-list')
+        data = {'descricao': 'Produto sem preço', 'ncm': '33333333'}
+        response = self.client.post(url, data)
+        assert response.status_code == status.HTTP_201_CREATED
+        product = Product.objects.get(descricao='Produto sem preço')
+        assert product.unit_value is None
 
     def test_delete_product(self):
         # Grant delete permission

@@ -8,6 +8,7 @@ export type Product = {
   id: string
   descricao: string
   ncm: string
+  unit_value: string | null
   created_at: string
   updated_at: string
 }

@@ -123,6 +123,9 @@ class ShipmentItemSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
+    v_un_com = serializers.DecimalField(
+        max_digits=11, decimal_places=4, required=False
+    )
 
     class Meta:
         model = ShipmentItem
@@ -144,7 +147,16 @@ class ShipmentItemSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'q_com': 'Quantidade deve ser positiva.'
             })
-        if attrs.get('v_un_com', 0) < 0:
+
+        product = attrs.get('product')
+        if 'v_un_com' not in attrs and product and product.unit_value is not None:
+            attrs['v_un_com'] = product.unit_value
+
+        if 'v_un_com' not in attrs:
+            raise serializers.ValidationError({
+                'v_un_com': 'Valor unitário é obrigatório.'
+            })
+        if attrs['v_un_com'] < 0:
             raise serializers.ValidationError({
                 'v_un_com': 'Valor unitário não pode ser negativo.'
             })
@@ -680,6 +692,13 @@ class ShipmentCreateSerializer(serializers.ModelSerializer):
         return value
 
     @staticmethod
+    def _sync_product_unit_value(item_data):
+        product = item_data.get('product')
+        v_un_com = item_data.get('v_un_com')
+        if product and v_un_com is not None and product.unit_value != v_un_com:
+            Product.objects.filter(pk=product.pk).update(unit_value=v_un_com)
+
+    @staticmethod
     def validate_serie(value):
         if value is None:
             return value
@@ -721,6 +740,7 @@ class ShipmentCreateSerializer(serializers.ModelSerializer):
                 item_data['v_prod'] = round(
                     item_data['q_com'] * item_data['v_un_com'], 2
                 )
+                self._sync_product_unit_value(item_data)
                 if item_id and instance.items.filter(pk=item_id).exists():
                     instance.items.filter(pk=item_id).update(**item_data)
                 else:
@@ -800,6 +820,7 @@ class ShipmentCreateSerializer(serializers.ModelSerializer):
         shipment.save(update_fields=['participants_snapshot', 'updated_at'])
         for idx, item_data in enumerate(items_data, start=1):
             item_data['n_item'] = idx
+            self._sync_product_unit_value(item_data)
             ShipmentItem.objects.create(shipment=shipment, **item_data)
         return shipment
 

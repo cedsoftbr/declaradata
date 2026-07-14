@@ -28,6 +28,13 @@ class Product(models.Model):
     )
     descricao = models.CharField(max_length=255, verbose_name='descrição')
     ncm = models.CharField(max_length=8, verbose_name='NCM')
+    unit_value = models.DecimalField(
+        max_digits=11,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        verbose_name='valor unitário',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -111,6 +111,10 @@ export function ItemsList({
                     product_id: p.id,
                     x_prod: p.descricao,
                     ncm: formatNcm(p.ncm),
+                    v_un_com:
+                      p.unit_value && !(parseFloat(it.v_un_com) > 0)
+                        ? p.unit_value
+                        : it.v_un_com,
                   })
                 }
                 className={inp}

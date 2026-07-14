@@ -7,6 +7,7 @@ from apps.core.factories import (
     CarrierFactory,
     CompanyFactory,
     PersonFactory,
+    ProductFactory,
     ShipmentFactory,
     ShipmentItemFactory,
     SuperAdminFactory,
@@ -30,6 +31,29 @@ def test_shipment_item_serializer_validation():
     serializer = ShipmentItemSerializer(data=data)
     assert serializer.is_valid(), serializer.errors
     assert serializer.validated_data['v_prod'] == pytest.approx(EXPECTED_VPROD)
+
+
+@pytest.mark.django_db
+def test_shipment_item_serializer_fills_v_un_com_from_product():
+    product = ProductFactory(unit_value=7.5)
+    data = {
+        'product_id': product.id,
+        'x_prod': 'Test',
+        'ncm': '12345678',
+        'q_com': 2,
+    }
+    serializer = ShipmentItemSerializer(data=data)
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data['v_un_com'] == pytest.approx(7.5)
+    assert serializer.validated_data['v_prod'] == pytest.approx(15.0)
+
+
+@pytest.mark.django_db
+def test_shipment_item_serializer_requires_v_un_com_without_product_value():
+    data = {'x_prod': 'Test', 'ncm': '12345678', 'q_com': 2}
+    serializer = ShipmentItemSerializer(data=data)
+    assert not serializer.is_valid()
+    assert 'v_un_com' in serializer.errors
 
 
 @pytest.mark.django_db
@@ -121,6 +145,42 @@ def test_shipment_create_serializer_create(db):
     shipment = serializer.save()
     assert shipment.items.count() == 1
     assert shipment.items.first().v_prod == pytest.approx(EXPECTED_VPROD)
+
+
+@pytest.mark.django_db
+def test_shipment_create_serializer_create_updates_product_unit_value():
+    company = CompanyFactory()
+    emitter = Person.objects.get(company=company, document=company.cnpj)
+    emitter.is_emitente = True
+    emitter.save()
+
+    person = PersonFactory(company=company)
+    carrier = CarrierFactory(company=company)
+    product = ProductFactory(company=company, unit_value=None)
+
+    data = {
+        'company': company.id,
+        'emitter_id': emitter.id,
+        'recipient_id': person.id,
+        'carrier_id': carrier.id,
+        'tp_emit': 1,
+        'tp_amb': 2,
+        'transport_mode': 1,
+        'tp_transp': 2,
+        'items': [{
+            'product_id': product.id,
+            'x_prod': product.descricao,
+            'ncm': product.ncm,
+            'q_com': 3,
+            'v_un_com': 12.5,
+        }],
+    }
+    serializer = ShipmentCreateSerializer(data=data)
+    assert serializer.is_valid(), serializer.errors
+    serializer.save()
+
+    product.refresh_from_db()
+    assert product.unit_value == pytest.approx(12.5)
 
 
 @pytest.mark.django_db

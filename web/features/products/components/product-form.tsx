@@ -12,10 +12,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ncmCatalogApi } from '@/features/ncm-catalog/api'
+import {
+  type ProductFormData,
+  type ProductFormInput,
+  productSchema,
+} from '@/features/products/schemas'
 import { useApi } from '@/hooks/use-api'
 import type { Product } from '@/lib/api'
 import { formatNcm, normalizeNcm } from '@/lib/document'
-import { type ProductFormData, productSchema } from '@/lib/schemas'
 
 interface ProductFormProps {
   initialData?: Product | null
@@ -34,16 +38,18 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
     register,
     handleSubmit,
     formState: { errors, isDirty },
-  } = useForm<ProductFormData>({
+  } = useForm<ProductFormInput, unknown, ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: initialData
       ? {
           descricao: initialData.descricao,
           ncm: formatNcm(initialData.ncm),
+          unit_value: (initialData.unit_value ?? '') as ProductFormInput['unit_value'],
         }
       : {
           descricao: '',
           ncm: '',
+          unit_value: '',
         },
   })
   const checkNcmCatalog = async (value: string) => {
@@ -88,7 +94,10 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
 
       const res = await call(url, {
         method,
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          unit_value: data.unit_value === '' ? null : data.unit_value,
+        }),
       })
 
       if (!res.ok) {
@@ -194,6 +203,29 @@ export function ProductForm({ initialData, onSuccess }: ProductFormProps) {
               {ncmNotCataloged && !errors.ncm && (
                 <p className="text-[10px] text-amber-500 font-medium ml-1">
                   NCM não catalogado
+                </p>
+              )}
+            </div>
+
+            <div className="w-full md:w-[200px] space-y-1.5">
+              <Label
+                htmlFor="unit_value"
+                className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1"
+              >
+                Valor Unitário (R$)
+              </Label>
+              <Input
+                id="unit_value"
+                type="number"
+                step="0.0001"
+                min="0"
+                {...register('unit_value')}
+                aria-invalid={!!errors.unit_value}
+                className="h-10 rounded-xl border-muted-foreground/20 focus-visible:ring-primary/20"
+              />
+              {errors.unit_value && (
+                <p className="text-[10px] text-destructive font-medium ml-1">
+                  {errors.unit_value.message}
                 </p>
               )}
             </div>
