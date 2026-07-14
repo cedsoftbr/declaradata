@@ -28,7 +28,7 @@ def validate_cpf_cnpj(document: str) -> str:
         raise serializers.ValidationError(
             'Documento inválido: informe um CPF (11 dígitos) ou CNPJ (14 dígitos).'
         )
-    return document
+    return digits
 
 
 class PersonAddressSerializer(serializers.ModelSerializer):
@@ -192,7 +192,7 @@ class PersonSerializer(serializers.ModelSerializer):
     person_type_display = serializers.CharField(read_only=True)
     addresses = serializers.SerializerMethodField(read_only=True)
     has_certificate = serializers.SerializerMethodField(read_only=True)
-    document = serializers.CharField(validators=[validate_cpf_cnpj])
+    document = serializers.CharField()
     company_id = serializers.PrimaryKeyRelatedField(
         source='company',
         queryset=Person.company.field.related_model.objects.all(),
@@ -226,6 +226,14 @@ class PersonSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated and not request.user.is_superadmin:
             fields['company_id'].read_only = True
         return fields
+
+    @staticmethod
+    def validate_document(value):
+        # Normaliza para dígitos aqui (não via `validators=` no field) porque
+        # o retorno de um validator do DRF é descartado — só validate_<field>
+        # substitui o valor de fato, garantindo que o mesmo documento sempre
+        # seja comparado/persistido no mesmo formato.
+        return validate_cpf_cnpj(value)
 
     def validate(self, attrs):
         attrs = super().validate(attrs)

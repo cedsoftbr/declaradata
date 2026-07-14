@@ -143,6 +143,48 @@ class PersonTests(APITestCase):
         assert response.status_code == status.HTTP_201_CREATED
         assert Person.objects.get(name='P2').company == other_company
 
+    def test_create_person_upserts_when_document_formatted_differently(self):
+        RolePermission.objects.filter(
+            role=self.role, module=Role.Module.PERSONS
+        ).update(can_edit=True)
+        raw = self._cnpj_gen.generate()
+        person = Person.objects.create(
+            company=self.company, name='Original', document=raw
+        )
+        masked = f'{raw[:2]}.{raw[2:5]}.{raw[5:8]}/{raw[8:12]}-{raw[12:]}'
+
+        url = reverse('person-list')
+        response = self.client.post(url, {'name': 'Atualizado', 'document': masked})
+        assert response.status_code == status.HTTP_200_OK
+        person.refresh_from_db()
+        assert person.name == 'Atualizado'
+        assert person.document == raw
+        assert Person.objects.filter(company=self.company, document=raw).count() == 1
+
+    def test_update_person_redirects_to_document_owner(self):
+        RolePermission.objects.filter(
+            role=self.role, module=Role.Module.PERSONS
+        ).update(can_edit=True)
+        owner_doc = self._cnpj_gen.generate()
+        owner = Person.objects.create(
+            company=self.company, name='Dono do documento', document=owner_doc
+        )
+        stale = Person.objects.create(
+            company=self.company,
+            name='Cadastro obsoleto',
+            document=self._cnpj_gen.generate(),
+        )
+
+        url = reverse('person-detail', kwargs={'pk': stale.id})
+        response = self.client.patch(
+            url, {'name': 'Novos dados', 'document': owner_doc}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        owner.refresh_from_db()
+        assert owner.name == 'Novos dados'
+        stale.refresh_from_db()
+        assert stale.name == 'Cadastro obsoleto'
+
     def test_superadmin_update_person_other_company(self):
         other_company = Company.objects.create(
             name='Other', cnpj=self._cnpj_gen.generate()

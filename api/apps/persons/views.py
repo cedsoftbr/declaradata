@@ -170,28 +170,51 @@ class PersonViewSet(viewsets.ModelViewSet):
             ip_address=get_client_ip(self.request),
         )
 
+    @staticmethod
+    def _find_existing_by_document(company, document: str) -> Person | None:
+        digits = ''.join(filter(str.isdigit, document)) if document else ''
+        if not company or not digits:
+            return None
+        # Documentos legados podem estar salvos com máscara; aceita os dois
+        # formatos até a migração de normalização rodar em todo o histórico.
+        return (
+            Person.objects
+            .filter(company=company)
+            .filter(Q(document=document) | Q(document=digits))
+            .first()
+        )
+
     def create(self, request, *args, **kwargs):
         # Upsert por documento: se já existe na empresa, atualiza em vez de rejeitar.
         # Necessário quando o usuário digita o documento manualmente no DC-e sem
         # selecionar da lista — o frontend não tem o person_id e faz POST.
         company = getattr(request.user, 'company', None)
-        document = request.data.get('document', '')
-        digits = ''.join(filter(str.isdigit, document)) if document else ''
-        if company and digits:
-            existing = (
-                Person.objects
-                .filter(company=company)
-                .filter(Q(document=document) | Q(document=digits))
-                .first()
-            )
-            if existing:
-                serializer = self.get_serializer(
-                    existing, data=request.data, partial=True
-                )
-                serializer.is_valid(raise_exception=True)
-                self.perform_update(serializer)
-                return Response(serializer.data, status=status.HTTP_200_OK)
+        existing = self._find_existing_by_document(
+            company, request.data.get('document', '')
+        )
+        if existing:
+            serializer = self.get_serializer(existing, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):  # noqa: ARG002
+        # O frontend do DC-e pode resolver um person_id "stale" (cache local)
+        # que não é mais o dono do documento informado — nesse caso, redireciona
+        # o PATCH para o registro correto em vez de rejeitar por duplicidade.
+        instance = self.get_object()
+        document = request.data.get('document')
+        if document:
+            company = instance.company
+            existing = self._find_existing_by_document(company, document)
+            if existing and existing.pk != instance.pk:
+                instance = existing
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         if not self.request.user.is_superadmin:
@@ -374,7 +397,8 @@ class PersonViewSet(viewsets.ModelViewSet):
         valid_rows = []
 
         for index, row in enumerate(data):
-            document = str(row.get('documento') or '').strip()
+            raw_document = str(row.get('documento') or '').strip()
+            document = ''.join(filter(str.isdigit, raw_document))
             name = row.get('nome')
             ibge_code = str(row.get('ibge') or '').strip()
 
